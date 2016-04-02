@@ -6,4 +6,4 @@ organization      := "com.rgoulter"
 
 scalaVersion      := "2.11.8"
 
-libraryDependencies += "com.fifesoft" % "rsyntaxtextarea" % "2.5.8"
+libraryDependencies += "com.fifesoft" % "rsyntaxtextarea" % "2.5.8" withSources() withJavadoc()
