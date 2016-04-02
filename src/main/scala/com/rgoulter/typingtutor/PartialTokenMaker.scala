@@ -7,6 +7,24 @@ import javax.swing.Action
 import org.fife.ui.rsyntaxtextarea.OccurrenceMarker
 import org.fife.ui.rsyntaxtextarea.TokenImpl
 import org.fife.ui.rsyntaxtextarea.TokenTypes
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
+import org.fife.ui.rsyntaxtextarea.Style
+import java.awt.Color
+
+object PartialTokenMaker {
+  val UNTYPED_TOKEN = TokenTypes.DEFAULT_NUM_TOKEN_TYPES + 0;
+  val UntypedStyle = new Style(Color.gray)
+
+  // Adds `UNTYPED_TOKEN` style to the text area
+  def augmentStyleOfTextArea(textArea: RSyntaxTextArea): Unit = {
+    val scheme = textArea.getSyntaxScheme()
+
+    // Can't just setStyle(idx, Style),
+    // as this is out of the default range.
+
+    scheme.setStyles(scheme.getStyles() :+ UntypedStyle)
+  }
+}
 
 class PartialTokenMaker(tokMak: TokenMaker) extends TokenMaker {
   // How far to keep "dull"
@@ -45,14 +63,14 @@ class PartialTokenMaker(tokMak: TokenMaker) extends TokenMaker {
         } else if (tokOffs < position && tokEndOffs - tokOffs > 1) {
           // Hard case: the caret is in the middle of the word in the middle
           val headTok = new TokenImpl(text, tokOffs, position - 1, tokOffs, tok.getType(), tok.getLanguageIndex)
-          val tailTok = new TokenImpl(text, position, tokEndOffs - 1, position, TokenTypes.IDENTIFIER, tok.getLanguageIndex)
+          val tailTok = new TokenImpl(text, position, tokEndOffs - 1, position, PartialTokenMaker.UNTYPED_TOKEN, tok.getLanguageIndex)
 
           headTok.setNextToken(tailTok)
           tailTok.setNextToken(nextTok)
 
           headTok
         } else {
-          fixedTok.setType(TokenTypes.IDENTIFIER)
+          fixedTok.setType(PartialTokenMaker.UNTYPED_TOKEN)
 
           fixedTok
         }

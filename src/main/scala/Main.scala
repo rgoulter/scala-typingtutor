@@ -27,6 +27,8 @@ class TextEditorDemo extends JFrame {
   val partialTokMak = new PartialTokenMaker(new JavaTokenMaker())
   syntaxDoc.setSyntaxStyle(partialTokMak)
 
+  PartialTokenMaker.augmentStyleOfTextArea(textArea)
+
   textArea.setText(SampleText)
 
   textArea.setEditable(false)
@@ -45,6 +47,7 @@ class TextEditorDemo extends JFrame {
   // easy to figure out what to subclass.
   private def forceRefresh(): Unit = {
     val pos = textArea.getCaretPosition()
+    partialTokMak.position = pos
     textArea.setText(textArea.getText())
     textArea.setCaretPosition(pos)
   }
@@ -89,7 +92,8 @@ class TextEditorDemo extends JFrame {
         }
       }
 
-      partialTokMak.position = textArea.getCaretPosition()
+      // The '}' still inserts a character, even if `editable` is false!
+      ke.consume()
     }
   }
 
