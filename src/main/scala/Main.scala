@@ -10,6 +10,9 @@ import javax.swing.event.CaretListener
 import javax.swing.event.CaretEvent
 import java.awt.event.MouseListener
 import java.awt.event.MouseEvent
+import com.rgoulter.typingtutor.TypingKeyListener
+import java.awt.Color
+import java.awt.Point
 
 class TextEditorDemo extends JFrame {
   val SampleText = """public class HelloWorld {
@@ -36,6 +39,7 @@ class TextEditorDemo extends JFrame {
   textArea.setCodeFoldingEnabled(false)
   textArea.setCaretStyle(0, CaretStyle.BLOCK_STYLE)
   textArea.getCaret().setVisible(true)
+  textArea.getCaret().setBlinkRate(0)
 
   textArea.setCaretPosition(0)
 
@@ -47,56 +51,40 @@ class TextEditorDemo extends JFrame {
   // easy to figure out what to subclass.
   private def forceRefresh(): Unit = {
     val pos = textArea.getCaretPosition()
-    partialTokMak.position = pos
+    val selStart = textArea.getSelectionStart
+    val selEnd = textArea.getSelectionEnd
+
+    partialTokMak.position = selStart
     textArea.setText(textArea.getText())
-    textArea.setCaretPosition(pos)
+
+    textArea.setCaretPosition(selStart)
+    textArea.moveCaretPosition(selEnd)
   }
 
-  val typeTutorKL = new KeyListener {
-    override def keyPressed(ke: KeyEvent): Unit = {
-      ke.getKeyCode() match {
-        case KeyEvent.VK_LEFT  => ke.consume()
-        case KeyEvent.VK_RIGHT => ke.consume()
-        case KeyEvent.VK_UP    => ke.consume()
-        case KeyEvent.VK_DOWN  => ke.consume()
-        case KeyEvent.VK_END   => ke.consume()
-        case KeyEvent.VK_HOME  => ke.consume()
-        case KeyEvent.VK_PAGE_UP   => ke.consume()
-        case KeyEvent.VK_PAGE_DOWN => ke.consume()
-        case _ => ()
-      }
-    }
-    override def keyReleased(ke: KeyEvent): Unit = {}
-    override def keyTyped(ke: KeyEvent): Unit = {
-      val caretPosition = textArea.getCaretPosition()
-      val charAtPos = textArea.getText().charAt(caretPosition)
-      val pressedChar = ke.getKeyChar
-
-      pressedChar match {
-        case '\b' => {
-          if (caretPosition > 0) {
-            textArea.setCaretPosition(caretPosition - 1)
-            forceRefresh()
-          }
-        }
-        case '\n' => {
-          // ignore
-        }
-        case c => { // what about characters like 'Home'?
-//          println(s"Pressed Key '$charAtPos':$caretPosition <= '$pressedChar'")
-
-          if (caretPosition + 1 < textArea.getText().length()) {
-            textArea.setCaretPosition(caretPosition + 1)
-            forceRefresh()
-          }
-        }
+  val typeTutorKL = new TypingKeyListener(textArea.getText(), (pos, numIncorrect) => {
+    val caretColor =
+      if (numIncorrect == 0) {
+        Color.green
+      } else {
+        Color.red
       }
 
-      // The '}' still inserts a character, even if `editable` is false!
-      ke.consume()
-    }
-  }
+    textArea.setCaretColor(caretColor)
+    textArea.setSelectionColor(caretColor)
 
+    if (numIncorrect == 0) {
+      textArea.setCaretPosition(pos)
+    } else {
+      textArea.setCaretPosition(pos + numIncorrect)
+      textArea.moveCaretPosition(pos + 1)
+    }
+
+    forceRefresh()
+  })
+
+  textArea.addKeyListener(typeTutorKL)
+
+  // Disable mouse interaction
   val typeTutorML = new MouseListener {
     def mousePressed(me: MouseEvent): Unit = {
       me.consume()
@@ -111,7 +99,6 @@ class TextEditorDemo extends JFrame {
     def mouseExited(me: MouseEvent): Unit = {}
   }
 
-  textArea.addKeyListener(typeTutorKL)
   for (ml <- textArea.getMouseListeners()) { textArea.removeMouseListener(ml) }
 
   val sp = new RTextScrollPane(textArea)
