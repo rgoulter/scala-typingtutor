@@ -13,6 +13,8 @@ import java.awt.event.MouseEvent
 import com.rgoulter.typingtutor.TypingKeyListener
 import java.awt.Color
 import java.awt.Point
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 
 class TextEditorDemo extends JFrame {
   val SampleText = """public class HelloWorld {
@@ -84,12 +86,29 @@ class TextEditorDemo extends JFrame {
     // Remove all the key listeners
     for (kl <- textArea.getKeyListeners()) { textArea.removeKeyListener(kl) }
 
-    // XXX Show the stats
-    // (in a dialogue window?)
-    stats.print()
+    // Show the stats (in a dialogue window?)
+    val dialog = new JFrame("Statistics")
+    val label = new JLabel(s"""<html>
+<table>
+  <tr><td>Total</td><td>${stats.numTotal}</td></tr>
+  <tr><td>Correct</td><td>${stats.numCorrect}</td></tr>
+  <tr><td>Incorrect</td><td>${stats.numIncorrect}</td></tr>
+</table></html>""")
+    dialog.getContentPane().add(label)
+    dialog.pack()
+    dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE)
 
-    // XXX ...and when that closes, quit.
-    dispose()
+    def disposeFrame() = this.dispose()
+
+    dialog.addWindowListener(new WindowAdapter {
+      override def windowClosed(we: WindowEvent): Unit = {
+        // ...and when that closes, quit.
+        disposeFrame()
+      }
+    })
+    dialog.setLocationRelativeTo(this)
+
+    dialog.setVisible(true)
   })
 
   // Open a file..
@@ -101,8 +120,9 @@ class TextEditorDemo extends JFrame {
           case KeyEvent.VK_O => {
             println("Open file")
 
-            // XXX Save, Reset the Score.
-            
+            // TODO Save, Reset the Score.
+            // (What's best to do if user starts typing, then opens file?).
+
             ke.consume()
           }
           case _ => ()
