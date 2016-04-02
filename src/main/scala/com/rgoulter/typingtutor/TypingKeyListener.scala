@@ -6,12 +6,33 @@ import java.awt.event.KeyListener
 
 class TypedStats(val numTotal: Int,
                  val numCorrect: Int,
-                 val numIncorrect: Int) {
+                 val numIncorrect: Int,
+                 val entries: Array[(Char, Char, Long)]) {
   def print(): Unit = {
     println(s"Total: $numTotal")
     println(s"Correct: $numCorrect")
     println(s"Incorrect: $numIncorrect")
   }
+
+  val duration: Long = {
+    val start = entries.head._3
+    val end   = entries.last._3
+    end - start
+  }
+
+  val durationInMins: Double =
+    (duration / 1000).toDouble / 60
+
+  val durationStr: String =
+    s"${(duration / 1000) / 60}:${(duration / 1000) % 60}"
+
+  val accuracy = numCorrect.toDouble / numTotal
+
+  val accuracyPercent: Int = (accuracy * 100).toInt
+
+  // wpm = (# chars / 5) / (time in mins)
+  // Rounded to int is close enough
+  val wpm = ((numCorrect / 5) / durationInMins).toInt
 }
 
 // callback: (position, numIncorrect) => ()
@@ -29,19 +50,16 @@ class TypingKeyListener(text: String,
   private def numTypedCorrect: Int =
     numTypedTotal - numTypedIncorrect
 
-  // TODO: Could also correct list-of (exp, actual, time)
+  // collect list-of (exp, actual, time)
+  private val mutKeyEntries = new scala.collection.mutable.ArrayBuffer[(Char, Char, Long)](1000)
 
   def stats: TypedStats = {
-    new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect)
+    new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect, mutKeyEntries.toArray)
   }
 
   override def keyPressed(ke: KeyEvent): Unit = {}
 
   override def keyReleased(ke: KeyEvent): Unit = {}
-
-  // TODO: There should be an "Endgame" condition;
-  // e.g. typed for 1-2 mins on a page; typed 300 chars, or something.
-  // and/or reached end of document.
 
   override def keyTyped(ke: KeyEvent): Unit = {
     val expectedChar = text.charAt(pos)
@@ -65,9 +83,12 @@ class TypingKeyListener(text: String,
 //          println(s"Pressed Key '$charAtPos':$caretPosition <= '$pressedChar'")
 
         if (pos + 1 < text.length()) {
-          // TODO: Here is where we'd want to do any statistic-tracking.
-          // e.g. which key-pairs go well together, which don't.,
-          //      most "mistyped", etc.
+          // Keep track of entered things
+          // (Slight discrepancy if we include these all).
+          val timeMillis = System.currentTimeMillis()
+          val entry = (expectedChar, pressedChar, timeMillis)
+          mutKeyEntries += entry
+
 
           numTypedTotal += 1
 

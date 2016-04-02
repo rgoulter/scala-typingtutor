@@ -93,6 +93,9 @@ class TextEditorDemo extends JFrame {
   <tr><td>Total</td><td>${stats.numTotal}</td></tr>
   <tr><td>Correct</td><td>${stats.numCorrect}</td></tr>
   <tr><td>Incorrect</td><td>${stats.numIncorrect}</td></tr>
+  <tr><td>Duration</td><td>${stats.durationStr} mins</td></tr>
+  <tr><td>Accuracy</td><td>${stats.accuracyPercent}%</td></tr>
+  <tr><td>WPM</td><td>${stats.wpm}</td></tr>
 </table></html>""")
     dialog.getContentPane().add(label)
     dialog.pack()
