@@ -4,26 +4,38 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 
+class TypedStats(val numTotal: Int,
+                 val numCorrect: Int,
+                 val numIncorrect: Int) {
+  def print(): Unit = {
+    println(s"Total: $numTotal")
+    println(s"Correct: $numCorrect")
+    println(s"Incorrect: $numIncorrect")
+  }
+}
+
 // callback: (position, numIncorrect) => ()
-class TypingKeyListener(text: String, callback: (Int, Int) => Unit) extends KeyListener {
+class TypingKeyListener(text: String,
+                        callback: (Int, Int) => Unit,
+                        endGame: TypedStats => Unit) extends KeyListener {
   private var lastCorrectPos = 0
   private var numIncorrect = 0
 
   private def pos: Int = lastCorrectPos + numIncorrect
 
-  override def keyPressed(ke: KeyEvent): Unit = {
-    ke.getKeyCode() match {
-      case KeyEvent.VK_LEFT  => ke.consume()
-      case KeyEvent.VK_RIGHT => ke.consume()
-      case KeyEvent.VK_UP    => ke.consume()
-      case KeyEvent.VK_DOWN  => ke.consume()
-      case KeyEvent.VK_END   => ke.consume()
-      case KeyEvent.VK_HOME  => ke.consume()
-      case KeyEvent.VK_PAGE_UP   => ke.consume()
-      case KeyEvent.VK_PAGE_DOWN => ke.consume()
-      case _ => ()
-    }
+  private var numTypedTotal: Int = 0
+  private var numTypedIncorrect: Int = 0
+  
+  private def numTypedCorrect: Int =
+    numTypedTotal - numTypedIncorrect
+
+  // TODO: Could also correct list-of (exp, actual, time)
+
+  def stats: TypedStats = {
+    new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect)
   }
+
+  override def keyPressed(ke: KeyEvent): Unit = {}
 
   override def keyReleased(ke: KeyEvent): Unit = {}
 
@@ -36,15 +48,20 @@ class TypingKeyListener(text: String, callback: (Int, Int) => Unit) extends KeyL
     val pressedChar = ke.getKeyChar
 
     pressedChar match {
+      case KeyEvent.VK_ESCAPE => {
+        endGame(stats)
+      }
+
       case '\b' => {
         if (numIncorrect > 0) {
-          numIncorrect = numIncorrect - 1
+          numIncorrect -= 1
         } else if (pos > 0) {
-          lastCorrectPos = lastCorrectPos - 1
+          lastCorrectPos -= 1
         }
       }
+
       // newlines.. are considered as just 'incorrect' characters.
-      case c => { // what about characters like 'Home'?
+      case c if !ke.isControlDown() => { // what about characters like 'Home'?
 //          println(s"Pressed Key '$charAtPos':$caretPosition <= '$pressedChar'")
 
         if (pos + 1 < text.length()) {
@@ -52,18 +69,29 @@ class TypingKeyListener(text: String, callback: (Int, Int) => Unit) extends KeyL
           // e.g. which key-pairs go well together, which don't.,
           //      most "mistyped", etc.
 
+          numTypedTotal += 1
+
           if (numIncorrect == 0 &&
               pressedChar == expectedChar) {
-            lastCorrectPos = lastCorrectPos + 1
-          } else if (numIncorrect < 5) { // **MAGIC** MaxIncorrectRule
-            numIncorrect = numIncorrect + 1
+            lastCorrectPos += 1
+          } else if (numIncorrect < 5) { // **MAGIC** MaxIncorrectRule = 5
+            numIncorrect += 1
+            numTypedIncorrect += 1
           }
-        }
-      }
-    }
 
-    // The '}' still inserts a character, even if `editable` is false!
-    ke.consume()
+          if (numTypedCorrect > 1000) { // **MAGIC** MaxCorrectTypedRule = 1000
+            endGame(stats)
+          }
+        } else {
+          // Got to the end.
+          endGame(stats)
+        }
+
+        // The '}' still inserts a character, even if `editable` is false!
+        ke.consume()
+      }
+      case _ => {}
+    }
 
     callback(lastCorrectPos, numIncorrect)
   }

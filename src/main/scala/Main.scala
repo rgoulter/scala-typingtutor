@@ -80,26 +80,65 @@ class TextEditorDemo extends JFrame {
     }
 
     forceRefresh()
+  }, (stats) => {
+    // Remove all the key listeners
+    for (kl <- textArea.getKeyListeners()) { textArea.removeKeyListener(kl) }
+
+    // XXX Show the stats
+    // (in a dialogue window?)
+    stats.print()
+
+    // XXX ...and when that closes, quit.
+    dispose()
+  })
+
+  // Open a file..
+  textArea.addKeyListener(new KeyListener {
+    override def keyPressed(ke: KeyEvent): Unit = {
+      // Ctrl-O => Open file.
+      if (ke.isControlDown()) {
+        ke.getKeyCode() match {
+          case KeyEvent.VK_O => {
+            println("Open file")
+
+            // XXX Save, Reset the Score.
+            
+            ke.consume()
+          }
+          case _ => ()
+        }
+      }
+    }
+
+    override def keyReleased(ke: KeyEvent): Unit = {}
+    override def keyTyped(ke: KeyEvent): Unit = {}
+  })
+
+  // Ignore/Suppress keys which move the cursor.
+  textArea.addKeyListener(new KeyListener {
+    override def keyPressed(ke: KeyEvent): Unit = {
+      ke.getKeyCode() match {
+        case KeyEvent.VK_LEFT  => ke.consume()
+        case KeyEvent.VK_RIGHT => ke.consume()
+        case KeyEvent.VK_UP    => ke.consume()
+        case KeyEvent.VK_DOWN  => ke.consume()
+        case KeyEvent.VK_END   => ke.consume()
+        case KeyEvent.VK_HOME  => ke.consume()
+        case KeyEvent.VK_PAGE_UP   => ke.consume()
+        case KeyEvent.VK_PAGE_DOWN => ke.consume()
+        case _ => ()
+      }
+    }
+
+    override def keyReleased(ke: KeyEvent): Unit = {}
+    override def keyTyped(ke: KeyEvent): Unit = {}
   })
 
   textArea.addKeyListener(typeTutorKL)
 
   // Disable mouse interaction
-  val typeTutorML = new MouseListener {
-    def mousePressed(me: MouseEvent): Unit = {
-      me.consume()
-    }
-    def mouseReleased(me: MouseEvent): Unit = {
-      me.consume()
-    }
-    def mouseClicked(me: MouseEvent): Unit = {
-      me.consume()
-    }
-    def mouseEntered(me: MouseEvent): Unit = {}
-    def mouseExited(me: MouseEvent): Unit = {}
-  }
-
   for (ml <- textArea.getMouseListeners()) { textArea.removeMouseListener(ml) }
+  for (ml <- textArea.getMouseMotionListeners()) { textArea.removeMouseMotionListener(ml) }
 
   val sp = new RTextScrollPane(textArea)
   cp.add(sp)
