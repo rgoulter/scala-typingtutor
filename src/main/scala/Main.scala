@@ -115,16 +115,33 @@ class TextEditorDemo extends JFrame {
   })
 
   // Open a file..
+  val frame = this
   textArea.addKeyListener(new KeyListener {
     override def keyPressed(ke: KeyEvent): Unit = {
       // Ctrl-O => Open file.
       if (ke.isControlDown()) {
         ke.getKeyCode() match {
           case KeyEvent.VK_O => {
-            println("Open file")
+            val chooser = new JFileChooser()
+            val retVal = chooser.showOpenDialog(frame)
 
-            // TODO Save, Reset the Score.
-            // (What's best to do if user starts typing, then opens file?).
+            if(retVal == JFileChooser.APPROVE_OPTION) {
+              val selectedFile = chooser.getSelectedFile()
+
+              // XXX Use the file extension to set/update the TokenMaker
+
+              val source = scala.io.Source.fromFile(selectedFile)
+              val text = source.mkString
+              source.close()
+
+              // Not the best way to do it,
+              // but set the text..
+              typeTutorKL.text = text
+              textArea.setText(text)
+
+              // TODO Save, Reset the Score in the typeTutorKL
+              // (What's best to do if user starts typing, then opens file?).
+            }
 
             ke.consume()
           }

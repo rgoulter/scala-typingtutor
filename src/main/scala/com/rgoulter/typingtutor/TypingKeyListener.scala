@@ -36,7 +36,7 @@ class TypedStats(val numTotal: Int,
 }
 
 // callback: (position, numIncorrect) => ()
-class TypingKeyListener(text: String,
+class TypingKeyListener(var text: String,
                         callback: (Int, Int) => Unit,
                         endGame: TypedStats => Unit) extends KeyListener {
   private var lastCorrectPos = 0
