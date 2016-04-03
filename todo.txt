@@ -1,0 +1,16 @@
+* Configuration
+  - e.g. what to do on mistype; ignore, don't advance, or demand a fix.
+* Skip over don't-need-to-type.
+  - Configure whether or not..
+  - Skip all trailing spaces,
+  - Skip all blank lines
+  - Skip all initial spaces (since an IDE could do this..)
+  - Skip comments
+* If 'typing' a large file, could make a practice session be only small
+  part of this. -- So, 'save' and 'restore' progress practising through
+  a file.
+* Pay off technical debt; current implementation is a sketch, not a well
+  architectured system.
+* Save the 'results' from the session.
+* Fancy analysis of results, like common typos (esp. the k-gram leading to it),
+  speed between keys, and fancy things like that.
