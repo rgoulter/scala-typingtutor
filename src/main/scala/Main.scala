@@ -17,6 +17,7 @@ import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.io.File
 import org.apache.commons.io.FilenameUtils
+import sodium.CellSink
 
 class TextEditorDemo extends JFrame {
   // XXX More difficult to extend 'frame', than to just make one..
@@ -42,7 +43,19 @@ class TextEditorDemo extends JFrame {
 
   PartialTokenMaker.augmentStyleOfTextArea(textArea)
 
-  textArea.setText(SampleText)
+  private val textCell = new CellSink[String](SampleText)
+
+  // Every time we set the text..
+  textCell.value().listen(text => {
+    textArea.setText(text)
+    textArea.setCaretPosition(0)
+    textArea.getCaret().setVisible(true)
+
+              // TODO Save, Reset the Score in the typeTutorKL
+              // (What's best to do if user starts typing, then opens file?).
+  })
+
+//  textArea.setText(SampleText) //XXX
 
   textArea.setEditable(false)
   textArea.setHighlightCurrentLine(false)
@@ -71,7 +84,7 @@ class TextEditorDemo extends JFrame {
     textArea.moveCaretPosition(selEnd)
   }
 
-  val typeTutorKL = new TypingKeyListener(textArea.getText())
+  val typeTutorKL = new TypingKeyListener(textCell)
 
   typeTutorKL.markers.value().listen(tup => {
     val (pos, numIncorrect) = tup
@@ -152,15 +165,7 @@ class TextEditorDemo extends JFrame {
               val text = source.mkString
               source.close()
 
-              // Not the best way to do it,
-              // but set the text..
-              typeTutorKL.text = text
-              textArea.setText(text)
-              textArea.setCaretPosition(0)
-              textArea.getCaret().setVisible(true)
-
-              // TODO Save, Reset the Score in the typeTutorKL
-              // (What's best to do if user starts typing, then opens file?).
+              textCell.send(text)
             }
 
             ke.consume()

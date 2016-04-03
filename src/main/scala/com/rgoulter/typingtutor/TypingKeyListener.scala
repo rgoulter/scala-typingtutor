@@ -11,6 +11,7 @@ import sodium.StreamSink
 sealed trait TypingEvent
 case class Backspace() extends TypingEvent
 case class TypedCharacter(val c: Char, val time: Long) extends TypingEvent
+case class ResetPosition(pos: Int = 0) extends TypingEvent
 
 class TypedStats(val numTotal: Int,
                  val numCorrect: Int,
@@ -52,7 +53,7 @@ class TypedStats(val numTotal: Int,
 }
 
 // callback: (position, numIncorrect) => ()
-class TypingKeyListener(var text: String) extends KeyListener {
+class TypingKeyListener(val text: Cell[String]) extends KeyListener {
   private val typedEvents = new StreamSink[TypingEvent]
   val backspaceEvents = typedEvents.filter({
     case Backspace() => true
@@ -77,11 +78,11 @@ class TypingKeyListener(var text: String) extends KeyListener {
           (Math.max(0, numCorrect - 1), numIncorrect)
         }
         case TypedCharacter(typedChar, time) => {
-          val expectedChar = text.charAt(numCorrect)
+          val expectedChar = text.sample().charAt(numCorrect)
 
           if (expectedChar == typedChar) {
             // numCorrect < textSize
-            val textSize = text.size
+            val textSize = text.sample().size
             (Math.min(numCorrect + 1, textSize - 1), numIncorrect)
           } else {
             (numCorrect, numIncorrect + 1)
@@ -107,15 +108,17 @@ class TypingKeyListener(var text: String) extends KeyListener {
   val totalTypedIncorrectCt = Cell.lift[Int, Int, Int]((total, correct) => total - correct, totalTypedCt, numCorrect)
 
   // collect list-of (exp, actual, time)
+//  val keyEntryEvts = new Stream[(Char, Char, Long)]()
   val keyEntryEvts =
     typedCharEvents.map({ case (c, time) => {
       // more idiomatic way of achieving this?
-      val expChar = text.charAt(numCorrect.sample())
+      val expChar = Cell.lift((text: String, idx: Int) => text.charAt(idx),
+                              text,
+                              numCorrect).sample()
 
 //      println(s"KeyEntry: expecting: $expChar got $c at time $time")
       (expChar, c, time)
     }})
-//  val keyEntries = keyEntryEvts.accum[Array[(Char, Char, Long)]](Array(), (tup, acc) => { acc :+ tup })
   val keyEntries: Cell[Array[(Char, Char, Long)]] =
     keyEntryEvts.accum(Array(), (tup, acc) => { acc :+ tup })
 
@@ -123,7 +126,7 @@ class TypingKeyListener(var text: String) extends KeyListener {
   // although this needs to distinguish between 'num-typed-correct' and 'position'
   private val endGameAtEndOfText = numCorrect.value().filter { numCorrect =>
     // TODO Slightly imprecise here, as this will escape before we type the last char.
-    numCorrect == text.length() - 1
+    numCorrect == text.sample().length() - 1
   }
   private val endGameSink = new StreamSink[Unit]()
   val endGame: Stream[Unit] =
