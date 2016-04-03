@@ -8,6 +8,7 @@ class TypedStats(val numTotal: Int,
                  val numCorrect: Int,
                  val numIncorrect: Int,
                  val entries: Array[(Char, Char, Long)]) {
+  // XXX This is a problem if numTotal is 0... :/
   def print(): Unit = {
     println(s"Total: $numTotal")
     println(s"Correct: $numCorrect")
