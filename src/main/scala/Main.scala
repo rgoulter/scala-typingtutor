@@ -100,23 +100,21 @@ class TextEditorDemo extends JFrame {
   def disposeFrame() = this.dispose()
 
   // Listen for an endgame
-  typeTutorKL.endGame.listen( _ => {
+  typeTutorKL.endGame.snapshot(typeTutorKL.stats).listen(stats => {
     // Remove all the key listeners
     for (kl <- textArea.getKeyListeners()) { textArea.removeKeyListener(kl) }
 
     // XXX This needs to be done using FRP
-//    val stats = typeTutorKL.stats
-
     // Show the stats (in a dialogue window?)
     val dialog = new JFrame("Statistics")
     val label = new JLabel(s"""<html>
 <table>
-  <tr><td>Total</td><td>???</td></tr>
-  <tr><td>Correct</td><td>???</td></tr>
-  <tr><td>Incorrect</td><td>???</td></tr>
-  <tr><td>Duration</td><td>??? mins</td></tr>
-  <tr><td>Accuracy</td><td>???%</td></tr>
-  <tr><td>WPM</td><td>???</td></tr>
+  <tr><td>Total</td>    <td>${stats.numTotal}</td></tr>
+  <tr><td>Correct</td>  <td>${stats.numCorrect}</td></tr>
+  <tr><td>Incorrect</td><td>${stats.numIncorrect}</td></tr>
+  <tr><td>Duration</td> <td>${stats.durationInMins} mins</td></tr>
+  <tr><td>Accuracy</td> <td>${stats.accuracyPercent}%</td></tr>
+  <tr><td>WPM</td>      <td>${stats.wpmStr}</td></tr>
 </table></html>""")
     dialog.getContentPane().add(label)
     dialog.pack()

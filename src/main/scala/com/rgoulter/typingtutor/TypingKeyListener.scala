@@ -16,7 +16,6 @@ class TypedStats(val numTotal: Int,
                  val numCorrect: Int,
                  val numIncorrect: Int,
                  val entries: Array[(Char, Char, Long)]) {
-  // XXX This is a problem if numTotal is 0... :/
   def print(): Unit = {
     println(s"Total: $numTotal")
     println(s"Correct: $numCorrect")
@@ -24,9 +23,13 @@ class TypedStats(val numTotal: Int,
   }
 
   val duration: Long = {
-    val start = entries.head._3
-    val end   = entries.last._3
-    end - start
+    if (!entries.isEmpty) {
+      val start = entries.head._3
+      val end   = entries.last._3
+      end - start
+    } else {
+      0
+    }
   }
 
   val durationInMins: Double =
@@ -41,51 +44,18 @@ class TypedStats(val numTotal: Int,
 
   // wpm = (# chars / 5) / (time in mins)
   // Rounded to int is close enough
-  val wpm = ((numCorrect / 5) / durationInMins).toInt
+  val wpmStr =
+    if (durationInMins > 0)
+      ((numCorrect / 5) / durationInMins).toInt
+    else
+      "???"
 }
 
 // callback: (position, numIncorrect) => ()
 class TypingKeyListener(var text: String) extends KeyListener {
-  /*
-   * So how do we do this?
-   *
-   * endGame becomes a Steam<Unit> we export.
-   *
-   * callback of (latestCorrect, numIncorrect) is a cell,
-   *   lifted from latestCorrect cell,
-   *               numIncorrect cell
-   *
-   * numTypedTotal might as well be a cell, also.
-   * 
-   * I'm not sure what the idiomatic way of getting mutKeyEntries is.
-   *
-   * Regardless, a Stream of (Expected, Got),
-   * had from [Backspace | Key c] event,
-   * & can get 'expected' by mapping from latestCorrect -> text ...
-   * 
-   * XXX The text is also a Cell, incidentally.
-   *
-   * stats... Hmm.
-   * Well, since we can't "get the value" from FRP system, right,
-   *  -- can 'lift' from the other values to get it,
-   * stats should be a cell, we take snapshot of this at time of game end, I guess?
-   */
-
-//  private var lastCorrectPos = 0
-//  private var numIncorrect = 0
-
-//  private def pos: Int = lastCorrectPos + numIncorrect
-
-  private var numTypedTotal: Int = 0
-  private var numTypedIncorrect: Int = 0
-  
-  private def numTypedCorrect: Int =
-    numTypedTotal - numTypedIncorrect
-
   // collect list-of (exp, actual, time)
-  private val mutKeyEntries = new scala.collection.mutable.ArrayBuffer[(Char, Char, Long)](1000)
-  
-  
+  //? How to collect *with time* in FRP? Cheat? Use listen? Snapshot of some cell?
+//  private val mutKeyEntries = new scala.collection.mutable.ArrayBuffer[(Char, Char, Long)](1000)
   
   private val typedEvents = new StreamSink[TypingEvent]
   val backspaceEvents = typedEvents.filter({
@@ -141,16 +111,17 @@ class TypingKeyListener(var text: String) extends KeyListener {
   // e.g. **MAGIC** MaxCorrectTypedRule = 1000
 
   val totalTypedCt = typedEvents.accum[Int](0, (_, n) => n + 1)
-
-  // So... backspace should decrease numIncorrect until 0; then decrease latestCorrect.
+  val totalTypedIncorrectCt = Cell.lift[Int, Int, Int]((total, correct) => total - correct, totalTypedCt, numCorrect)
 
   private val endGameSink = new StreamSink[Unit]()
   val endGame: Stream[Unit] = endGameSink
 
-  def stats: TypedStats = {
+  def stats = Cell.lift[Int, Int, Int, TypedStats]((numTypedTotal, numTypedCorrect, numTypedIncorrect) =>
     // XXX should be using FRP
-    new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect, Array())
-  }
+    new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect, Array()),
+    totalTypedCt,
+    numCorrect,
+    totalTypedIncorrectCt)
 
   override def keyPressed(ke: KeyEvent): Unit = {}
 
