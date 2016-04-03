@@ -10,7 +10,7 @@ import sodium.StreamSink
 
 sealed trait TypingEvent
 case class Backspace() extends TypingEvent
-case class TypedCharacter(val c: Char) extends TypingEvent
+case class TypedCharacter(val c: Char, val time: Long) extends TypingEvent
 
 class TypedStats(val numTotal: Int,
                  val numCorrect: Int,
@@ -53,20 +53,16 @@ class TypedStats(val numTotal: Int,
 
 // callback: (position, numIncorrect) => ()
 class TypingKeyListener(var text: String) extends KeyListener {
-  // collect list-of (exp, actual, time)
-  //? How to collect *with time* in FRP? Cheat? Use listen? Snapshot of some cell?
-//  private val mutKeyEntries = new scala.collection.mutable.ArrayBuffer[(Char, Char, Long)](1000)
-  
   private val typedEvents = new StreamSink[TypingEvent]
   val backspaceEvents = typedEvents.filter({
     case Backspace() => true
     case _ => false
   })
   val typedCharEvents = typedEvents.filter({
-    case TypedCharacter(_) => true
+    case TypedCharacter(_, _) => true
     case _ => false
   }).map({
-    case TypedCharacter(c) => c
+    case TypedCharacter(c, time) => (c, time)
     case _ => throw new IllegalStateException()
   })
 
@@ -80,7 +76,7 @@ class TypingKeyListener(var text: String) extends KeyListener {
           // numCorrect >= 0
           (Math.max(0, numCorrect - 1), numIncorrect)
         }
-        case TypedCharacter(typedChar) => {
+        case TypedCharacter(typedChar, time) => {
           val expectedChar = text.charAt(numCorrect)
 
           if (expectedChar == typedChar) {
@@ -97,7 +93,7 @@ class TypingKeyListener(var text: String) extends KeyListener {
         case Backspace() => {
           (numCorrect, numIncorrect - 1)
         }
-        case TypedCharacter(t) => {
+        case TypedCharacter(t, time) => {
           // **MAGIC** MaxIncorrectRule = 5
           (numCorrect, Math.min(numIncorrect + 1, 5))
         }
@@ -113,15 +109,29 @@ class TypingKeyListener(var text: String) extends KeyListener {
   val totalTypedCt = typedEvents.accum[Int](0, (_, n) => n + 1)
   val totalTypedIncorrectCt = Cell.lift[Int, Int, Int]((total, correct) => total - correct, totalTypedCt, numCorrect)
 
+  // collect list-of (exp, actual, time)
+  val keyEntryEvts =
+    typedCharEvents.map({ case (c, time) => {
+      // more idiomatic way of achieving this?
+      val expChar = text.charAt(numCorrect.sample())
+
+//      println(s"KeyEntry: expecting: $expChar got $c at time $time")
+      (expChar, c, time)
+    }})
+//  val keyEntries = keyEntryEvts.accum[Array[(Char, Char, Long)]](Array(), (tup, acc) => { acc :+ tup })
+  val keyEntries: Cell[Array[(Char, Char, Long)]] =
+    keyEntryEvts.accum(Array(), (tup, acc) => { acc :+ tup })
+
   private val endGameSink = new StreamSink[Unit]()
   val endGame: Stream[Unit] = endGameSink
 
-  def stats = Cell.lift[Int, Int, Int, TypedStats]((numTypedTotal, numTypedCorrect, numTypedIncorrect) =>
-    // XXX should be using FRP
-    new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect, Array()),
-    totalTypedCt,
-    numCorrect,
-    totalTypedIncorrectCt)
+  def stats: Cell[TypedStats] =
+    Cell.lift((numTypedTotal: Int, numTypedCorrect: Int, numTypedIncorrect: Int, keyEntries: Array[(Char, Char, Long)]) =>
+                new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect, keyEntries),
+              totalTypedCt,
+              numCorrect,
+              totalTypedIncorrectCt,
+              keyEntries)
 
   override def keyPressed(ke: KeyEvent): Unit = {}
 
@@ -142,7 +152,8 @@ class TypingKeyListener(var text: String) extends KeyListener {
       // newlines.. are considered as just 'incorrect' characters.
       case c if !ke.isControlDown() => { // what about characters like 'Home'?
 //          println(s"Pressed Key '$charAtPos':$caretPosition <= '$pressedChar'")
-        typedEvents.send(TypedCharacter(c))
+        val time = System.currentTimeMillis()
+        typedEvents.send(TypedCharacter(c, time))
 
         // The '}' still inserts a character, even if `editable` is false!
         ke.consume()
