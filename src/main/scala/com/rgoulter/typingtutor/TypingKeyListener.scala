@@ -3,6 +3,10 @@ package com.rgoulter.typingtutor
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
+import sodium.Cell
+import sodium.CellSink
+import sodium.Stream
+import sodium.StreamSink
 
 class TypedStats(val numTotal: Int,
                  val numCorrect: Int,
@@ -54,6 +58,9 @@ class TypingKeyListener(var text: String,
   // collect list-of (exp, actual, time)
   private val mutKeyEntries = new scala.collection.mutable.ArrayBuffer[(Char, Char, Long)](1000)
 
+  private val endGameSink = new StreamSink[Unit]()
+  val endGame: Stream[Unit] = endGameSink
+
   def stats: TypedStats = {
     new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect, mutKeyEntries.toArray)
   }
@@ -68,7 +75,7 @@ class TypingKeyListener(var text: String,
 
     pressedChar match {
       case KeyEvent.VK_ESCAPE => {
-        endGame(stats)
+        endGameSink.send(())
       }
 
       case '\b' => {
@@ -102,11 +109,11 @@ class TypingKeyListener(var text: String,
           }
 
           if (numTypedCorrect > 1000) { // **MAGIC** MaxCorrectTypedRule = 1000
-            endGame(stats)
+            endGameSink.send(())
           }
         } else {
           // Got to the end.
-          endGame(stats)
+          endGameSink.send(())
         }
 
         // The '}' still inserts a character, even if `editable` is false!

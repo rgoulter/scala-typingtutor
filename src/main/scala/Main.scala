@@ -90,9 +90,17 @@ class TextEditorDemo extends JFrame {
     }
 
     forceRefresh()
-  }, (stats) => {
+  })
+
+  val frame = this
+  def disposeFrame() = this.dispose()
+
+  // Listen for an endgame
+  typeTutorKL.endGame.listen( _ => {
     // Remove all the key listeners
     for (kl <- textArea.getKeyListeners()) { textArea.removeKeyListener(kl) }
+
+    val stats = typeTutorKL.stats
 
     // Show the stats (in a dialogue window?)
     val dialog = new JFrame("Statistics")
@@ -109,21 +117,18 @@ class TextEditorDemo extends JFrame {
     dialog.pack()
     dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE)
 
-    def disposeFrame() = this.dispose()
-
     dialog.addWindowListener(new WindowAdapter {
       override def windowClosed(we: WindowEvent): Unit = {
         // ...and when that closes, quit.
         disposeFrame()
       }
     })
-    dialog.setLocationRelativeTo(this)
+    dialog.setLocationRelativeTo(frame)
 
     dialog.setVisible(true)
   })
 
   // Open a file..
-  val frame = this
   textArea.addKeyListener(new KeyListener {
     override def keyPressed(ke: KeyEvent): Unit = {
       // Ctrl-O => Open file.
