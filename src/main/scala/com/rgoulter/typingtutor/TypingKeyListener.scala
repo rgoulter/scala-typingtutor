@@ -103,9 +103,6 @@ class TypingKeyListener(var text: String) extends KeyListener {
   val numCorrect   = markers.map(_._1)
   val numIncorrect = markers.map(_._2)
 
-  // TODO: Send 'quit' event when reached end of text; when send too many..
-  // e.g. **MAGIC** MaxCorrectTypedRule = 1000
-
   val totalTypedCt = typedEvents.accum[Int](0, (_, n) => n + 1)
   val totalTypedIncorrectCt = Cell.lift[Int, Int, Int]((total, correct) => total - correct, totalTypedCt, numCorrect)
 
@@ -122,8 +119,16 @@ class TypingKeyListener(var text: String) extends KeyListener {
   val keyEntries: Cell[Array[(Char, Char, Long)]] =
     keyEntryEvts.accum(Array(), (tup, acc) => { acc :+ tup })
 
+  // TODO 'Quit after typed certain number'
+  // although this needs to distinguish between 'num-typed-correct' and 'position'
+  private val endGameAtEndOfText = numCorrect.value().filter { numCorrect =>
+    // TODO Slightly imprecise here, as this will escape before we type the last char.
+    numCorrect == text.length() - 1
+  }
   private val endGameSink = new StreamSink[Unit]()
-  val endGame: Stream[Unit] = endGameSink
+  val endGame: Stream[Unit] =
+    endGameSink.merge(endGameAtEndOfText.map(_ => ()),
+                      (l, r) => l)
 
   def stats: Cell[TypedStats] =
     Cell.lift((numTypedTotal: Int, numTypedCorrect: Int, numTypedIncorrect: Int, keyEntries: Array[(Char, Char, Long)]) =>
