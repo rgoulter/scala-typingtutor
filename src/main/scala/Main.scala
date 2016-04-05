@@ -73,6 +73,7 @@ class TextEditorDemo extends JFrame {
   // This implementation is hack-ish, but it's not
   // easy to figure out what to subclass.
   private def forceRefresh(): Unit = {
+    println("Force Refresh")
     val pos = textArea.getCaretPosition()
     val selStart = textArea.getSelectionStart
     val selEnd = textArea.getSelectionEnd
@@ -88,6 +89,7 @@ class TextEditorDemo extends JFrame {
 
   typeTutorKL.markers.value().listen(tup => {
     val (pos, numIncorrect) = tup
+    println("Markers value update")
 
     val caretColor =
       if (numIncorrect == 0) {

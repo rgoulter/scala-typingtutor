@@ -55,6 +55,10 @@ class TypedStats(val numTotal: Int,
 // callback: (position, numIncorrect) => ()
 class TypingKeyListener(val text: Cell[String]) extends KeyListener {
   private val typedEvents = new StreamSink[TypingEvent]
+  // Need to be able to reset the markers on text changing..
+  private val typedOrReset =
+    typedEvents.merge(text.value().map(t => ResetPosition()),
+                      (te, reset) => reset)
   val backspaceEvents = typedEvents.filter({
     case Backspace() => true
     case _ => false
@@ -68,33 +72,33 @@ class TypingKeyListener(val text: Cell[String]) extends KeyListener {
   })
 
   // lastCorrect is a cell. How?
-  val markers = typedEvents.accum[(Int, Int)]((0, 0), (te, pair) => {
+  val markers = typedOrReset.accum[(Int, Int)]((0, 0), (te, pair) => {
     val (numCorrect, numIncorrect) = pair
 
-    if (numIncorrect == 0) {
-      te match {
-        case Backspace() => {
+    te match {
+      case ResetPosition(_) => (0, 0)
+      case Backspace() => {
+        if (numIncorrect == 0) {
           // numCorrect >= 0
           (Math.max(0, numCorrect - 1), numIncorrect)
+        } else {
+          (numCorrect, numIncorrect - 1)
         }
-        case TypedCharacter(typedChar, time) => {
+      }
+      case TypedCharacter(typedChar, time) => {
+        if (numIncorrect == 0) {
           val expectedChar = text.sample().charAt(numCorrect)
 
           if (expectedChar == typedChar) {
+            println(s"Markers: expected $expectedChar got $typedChar @ ($numCorrect, $numIncorrect)")
+
             // numCorrect < textSize
             val textSize = text.sample().size
             (Math.min(numCorrect + 1, textSize - 1), numIncorrect)
           } else {
             (numCorrect, numIncorrect + 1)
           }
-        }
-      }
-    } else {
-      te match {
-        case Backspace() => {
-          (numCorrect, numIncorrect - 1)
-        }
-        case TypedCharacter(t, time) => {
+        } else {
           // **MAGIC** MaxIncorrectRule = 5
           (numCorrect, Math.min(numIncorrect + 1, 5))
         }
