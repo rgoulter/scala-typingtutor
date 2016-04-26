@@ -87,7 +87,7 @@ class TextEditorDemo extends JFrame {
 
   val typeTutorKL = new TypingKeyListener(textCell)
 
-  typeTutorKL.markers.value().listen(tup => {
+  val listener = typeTutorKL.markers.value().listen(tup => {
     val (pos, numIncorrect) = tup
     println("Markers value update")
 
@@ -115,7 +115,7 @@ class TextEditorDemo extends JFrame {
   def disposeFrame() = this.dispose()
 
   // Listen for an endgame
-  typeTutorKL.endGame.snapshot(typeTutorKL.stats).listen(stats => {
+  val endGameListener = typeTutorKL.endGame.snapshot(typeTutorKL.stats).listen(stats => {
     // Remove all the key listeners
     for (kl <- textArea.getKeyListeners()) { textArea.removeKeyListener(kl) }
 
