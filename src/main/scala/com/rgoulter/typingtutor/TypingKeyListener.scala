@@ -57,7 +57,7 @@ class TypingKeyListener(val text: Cell[String]) extends KeyListener {
   private val typedEvents = new StreamSink[TypingEvent]
   // Need to be able to reset the markers on text changing..
   private val typedOrReset =
-    typedEvents.merge(text.value().map(t => ResetPosition()),
+    typedEvents.merge(text.updates().map(t => ResetPosition()),
                       (te, reset) => reset)
   val backspaceEvents = typedEvents.filter({
     case Backspace() => true
