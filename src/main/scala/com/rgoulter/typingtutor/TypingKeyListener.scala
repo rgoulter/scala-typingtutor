@@ -90,8 +90,6 @@ class TypingKeyListener(val text: Cell[String]) extends KeyListener {
           val expectedChar = text.sample().charAt(numCorrect)
 
           if (expectedChar == typedChar) {
-            println(s"Markers: expected $expectedChar got $typedChar @ ($numCorrect, $numIncorrect)")
-
             // numCorrect < textSize
             val textSize = text.sample().size
             (Math.min(numCorrect + 1, textSize - 1), numIncorrect)
@@ -120,7 +118,6 @@ class TypingKeyListener(val text: Cell[String]) extends KeyListener {
                               text,
                               numCorrect).sample()
 
-//      println(s"KeyEntry: expecting: $expChar got $c at time $time")
       (expChar, c, time)
     }})
   val keyEntries: Cell[Array[(Char, Char, Long)]] =
@@ -163,7 +160,6 @@ class TypingKeyListener(val text: Cell[String]) extends KeyListener {
 
       // newlines.. are considered as just 'incorrect' characters.
       case c if !ke.isControlDown() => { // what about characters like 'Home'?
-//          println(s"Pressed Key '$charAtPos':$caretPosition <= '$pressedChar'")
         val time = System.currentTimeMillis()
         typedEvents.send(TypedCharacter(c, time))
 
