@@ -87,8 +87,10 @@ class TextEditorDemo extends JFrame {
 
   val typeTutorKL = new TypingKeyListener(textCell)
 
-  val listener = typeTutorKL.markers.value().listen(tup => {
-    val (pos, numIncorrect) = tup
+  val listener = typeTutorKL.markers.value().listen(state => {
+    import state.numIncorrect
+    import state.position
+
     println("Markers value update")
 
     val caretColor =
@@ -102,10 +104,10 @@ class TextEditorDemo extends JFrame {
     textArea.setSelectionColor(caretColor)
 
     if (numIncorrect == 0) {
-      textArea.setCaretPosition(pos)
+      textArea.setCaretPosition(position)
     } else {
-      textArea.setCaretPosition(pos + numIncorrect)
-      textArea.moveCaretPosition(pos + 1)
+      textArea.setCaretPosition(position + numIncorrect)
+      textArea.moveCaretPosition(position + 1)
     }
 
     forceRefresh()
@@ -204,8 +206,8 @@ class TextEditorDemo extends JFrame {
   textArea.addKeyListener(typeTutorKL)
 
   // Disable mouse interaction
-  for (ml <- textArea.getMouseListeners()) { textArea.removeMouseListener(ml) }
-  for (ml <- textArea.getMouseMotionListeners()) { textArea.removeMouseMotionListener(ml) }
+//  for (ml <- textArea.getMouseListeners()) { textArea.removeMouseListener(ml) }
+//  for (ml <- textArea.getMouseMotionListeners()) { textArea.removeMouseMotionListener(ml) }
 
   val sp = new RTextScrollPane(textArea)
   cp.add(sp)

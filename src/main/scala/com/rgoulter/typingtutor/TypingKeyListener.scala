@@ -13,6 +13,20 @@ case class Backspace() extends TypingEvent
 case class TypedCharacter(val c: Char, val time: Long) extends TypingEvent
 case class ResetPosition(pos: Int = 0) extends TypingEvent
 
+object State {
+  // Since we want to skip over leading whitespace, blank lines,
+  // comments,
+  // and it may be that programs we type begin with these,
+  // initial state shouldn't necessarily be at 0.
+  def initialStateOf(): State =
+    State()
+}
+
+case class State(val numCorrect: Int = 0,
+                 val numIncorrect: Int = 0) {
+  val position = numCorrect
+}
+
 class TypedStats(val numTotal: Int,
                  val numCorrect: Int,
                  val numIncorrect: Int,
@@ -72,43 +86,53 @@ class TypingKeyListener(val text: Cell[String]) extends KeyListener {
   })
 
   // lastCorrect is a cell. How?
-  val markers = typedOrReset.accum[(Int, Int)]((0, 0), (te, pair) => {
-    val (numCorrect, numIncorrect) = pair
-
+  // XXX:STATE
+  val markers = typedOrReset.accum[State](State.initialStateOf(), (te, state) => {
     te match {
-      case ResetPosition(_) => (0, 0)
+      case ResetPosition(_) => State.initialStateOf()
       case Backspace() => {
-        if (numIncorrect == 0) {
-          // numCorrect >= 0
-          (Math.max(0, numCorrect - 1), numIncorrect)
-        } else {
-          (numCorrect, numIncorrect - 1)
+        state match {
+          // Pressed Backspace => Go back a character.
+          case State(numCorrect, 0) => { // if numIncorrect == 0
+            // ensure numCorrect >= 0
+            State(Math.max(0, numCorrect - 1), 0)
+          }
+          case State(numCorrect, numIncorrect) => {
+            State(numCorrect, numIncorrect - 1)
+          }
         }
       }
       case TypedCharacter(typedChar, time) => {
-        if (numIncorrect == 0) {
-          val expectedChar = text.sample().charAt(numCorrect)
+        state match {
+          case State(numCorrect, 0) => { // if numIncorrect == 0
+            val expectedChar = text.sample().charAt(numCorrect)
 
-          if (expectedChar == typedChar) {
-            println(s"Markers: expected $expectedChar got $typedChar @ ($numCorrect, $numIncorrect)")
+            if (expectedChar == typedChar) {
+              // println(s"Markers: expected $expectedChar got $typedChar @ ($numCorrect, 0)")
 
-            // numCorrect < textSize
-            val textSize = text.sample().size
-            (Math.min(numCorrect + 1, textSize - 1), numIncorrect)
-          } else {
-            (numCorrect, numIncorrect + 1)
+              // Correctly typed character.
+              // numCorrect < textSize
+              val textSize = text.sample().size
+              State(Math.min(numCorrect + 1, textSize - 1), 0)
+            } else {
+              // Mis-typed character.
+              // Previously didn't have any incorrect, now we do.
+              State(numCorrect, 1)
+            }
           }
-        } else {
-          // **MAGIC** MaxIncorrectRule = 5
-          (numCorrect, Math.min(numIncorrect + 1, 5))
+          case State(numCorrect, numIncorrect) => {
+            // **MAGIC** MaxIncorrectRule = 5
+            State(numCorrect, Math.min(numIncorrect + 1, 5))
+          }
         }
       }
     }
   })
-  val numCorrect   = markers.map(_._1)
-  val numIncorrect = markers.map(_._2)
+  val numCorrect   = markers.map(_.numCorrect)
+  val numIncorrect = markers.map(_.numIncorrect)
 
   val totalTypedCt = typedEvents.accum[Int](0, (_, n) => n + 1)
+  totalTypedCt.value().listen { n => println(s"Total Typed: $n keys.") }
   val totalTypedIncorrectCt = Cell.lift[Int, Int, Int]((total, correct) => total - correct, totalTypedCt, numCorrect)
 
   // collect list-of (exp, actual, time)
