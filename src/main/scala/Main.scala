@@ -1,48 +1,84 @@
 import java.awt.BorderLayout
-import javax.swing._
-import org.fife.ui.rtextarea._
-import org.fife.ui.rsyntaxtextarea._
-import java.awt.event.KeyListener
-import java.awt.event.KeyEvent
-import com.rgoulter.typingtutor.PartialTokenMaker
-import org.fife.ui.rsyntaxtextarea.modes.JavaTokenMaker
-import javax.swing.event.CaretListener
-import javax.swing.event.CaretEvent
-import java.awt.event.MouseListener
-import java.awt.event.MouseEvent
-import com.rgoulter.typingtutor.TypingKeyListener
 import java.awt.Color
 import java.awt.Point
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.io.File
+
+import javax.swing._
+import javax.swing.event.CaretEvent
+import javax.swing.event.CaretListener
+import javax.swing.text.Segment
+
+import scala.collection.JavaConverters.asScalaIteratorConverter
+
 import org.apache.commons.io.FilenameUtils
+
+import org.fife.ui.rtextarea._
+import org.fife.ui.rsyntaxtextarea._
+import org.fife.ui.rsyntaxtextarea.modes.JavaTokenMaker
+
+import sodium.CellSink
+
+import com.rgoulter.typingtutor.Document
+import com.rgoulter.typingtutor.DocumentImpl
+import com.rgoulter.typingtutor.PartialTokenMaker
+import com.rgoulter.typingtutor.SimpleDocumentImpl
+import com.rgoulter.typingtutor.TypingKeyListener
+
+
 
 class TextEditorDemo extends JFrame {
   // XXX More difficult to extend 'frame', than to just make one..
 
+  import com.rgoulter.typingtutor.Utils
+
   val SampleText = """public class HelloWorld {
   // This is a class
+
   public static void main(String args[]) {
-    println("Hello World!")
+    int x; // trailing comment
+
+    println("Hello World!");
   }
 }"""
+  val SampleTextTokMak = new JavaTokenMaker()
+  val SampleTextSegment =
+    new Segment(SampleText.toCharArray(), 0, SampleText.length())
+  val SampleInitToken =
+    SampleTextTokMak.getTokenList(SampleTextSegment, TokenTypes.NULL, 0)
+  val SampleDocument =
+    new DocumentImpl(SampleText,
+                     Utils.tokenIteratorOf(SampleText, SampleTextTokMak))
 
   val cp = new JPanel(new BorderLayout())
 
   val textArea = new RSyntaxTextArea(20, 60)
 
-  val syntaxDoc = textArea.getDocument().asInstanceOf[RSyntaxDocument]
+  val syntaxDoc = textArea.getDocument().asInstanceOf[RSyntaxDocument];
 
   // I don't like the idea of a mutable variable;
   // Maybe with appropriate signals/etc. in an FRP system,
   // could attach partialTokMak to listen to TypKL's cursor pos.
-  var partialTokMak = new PartialTokenMaker(new JavaTokenMaker())
+  var partialTokMak = new PartialTokenMaker(SampleTextTokMak)
   syntaxDoc.setSyntaxStyle(partialTokMak)
 
   PartialTokenMaker.augmentStyleOfTextArea(textArea)
 
-  textArea.setText(SampleText)
+  private val textCell = new CellSink[Document](SampleDocument)
+
+  // Every time we set the text..
+  def updateText(text: String, initPos: Int = 0): Unit = {
+    textArea.setText(text)
+    textArea.setCaretPosition(initPos)
+    textArea.getCaret().setVisible(true)
+  }
+
+  updateText(SampleText, SampleDocument.initialOffset)
 
   textArea.setEditable(false)
   textArea.setHighlightCurrentLine(false)
@@ -71,7 +107,12 @@ class TextEditorDemo extends JFrame {
     textArea.moveCaretPosition(selEnd)
   }
 
-  val typeTutorKL = new TypingKeyListener(textArea.getText(), (pos, numIncorrect) => {
+  val typeTutorKL = new TypingKeyListener(textCell)
+
+  val listener = typeTutorKL.markers.value().listen(state => {
+    import state.numIncorrect
+    import state.position
+
     val caretColor =
       if (numIncorrect == 0) {
         Color.green
@@ -83,33 +124,38 @@ class TextEditorDemo extends JFrame {
     textArea.setSelectionColor(caretColor)
 
     if (numIncorrect == 0) {
-      textArea.setCaretPosition(pos)
+      textArea.setCaretPosition(position)
     } else {
-      textArea.setCaretPosition(pos + numIncorrect)
-      textArea.moveCaretPosition(pos + 1)
+      textArea.setCaretPosition(position + numIncorrect)
+      textArea.moveCaretPosition(position + 1)
     }
 
     forceRefresh()
-  }, (stats) => {
+  })
+
+  val frame = this
+  def disposeFrame() = this.dispose()
+
+  // Listen for an endgame
+  val endGameListener = typeTutorKL.endGame.snapshot(typeTutorKL.stats).listen(stats => {
     // Remove all the key listeners
     for (kl <- textArea.getKeyListeners()) { textArea.removeKeyListener(kl) }
 
+    // XXX This needs to be done using FRP
     // Show the stats (in a dialogue window?)
     val dialog = new JFrame("Statistics")
     val label = new JLabel(s"""<html>
 <table>
-  <tr><td>Total</td><td>${stats.numTotal}</td></tr>
-  <tr><td>Correct</td><td>${stats.numCorrect}</td></tr>
+  <tr><td>Total</td>    <td>${stats.numTotal}</td></tr>
+  <tr><td>Correct</td>  <td>${stats.numCorrect}</td></tr>
   <tr><td>Incorrect</td><td>${stats.numIncorrect}</td></tr>
-  <tr><td>Duration</td><td>${stats.durationStr} mins</td></tr>
-  <tr><td>Accuracy</td><td>${stats.accuracyPercent}%</td></tr>
-  <tr><td>WPM</td><td>${stats.wpm}</td></tr>
+  <tr><td>Duration</td> <td>${stats.durationInMins} mins</td></tr>
+  <tr><td>Accuracy</td> <td>${stats.accuracyPercent}%</td></tr>
+  <tr><td>WPM</td>      <td>${stats.wpmStr}</td></tr>
 </table></html>""")
     dialog.getContentPane().add(label)
     dialog.pack()
     dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE)
-
-    def disposeFrame() = this.dispose()
 
     dialog.addWindowListener(new WindowAdapter {
       override def windowClosed(we: WindowEvent): Unit = {
@@ -117,13 +163,12 @@ class TextEditorDemo extends JFrame {
         disposeFrame()
       }
     })
-    dialog.setLocationRelativeTo(this)
+    dialog.setLocationRelativeTo(frame)
 
     dialog.setVisible(true)
   })
 
   // Open a file..
-  val frame = this
   textArea.addKeyListener(new KeyListener {
     override def keyPressed(ke: KeyEvent): Unit = {
       // Ctrl-O => Open file.
@@ -137,22 +182,20 @@ class TextEditorDemo extends JFrame {
               val selectedFile = chooser.getSelectedFile()
 
               // Use the file extension to set/update the TokenMaker
-              partialTokMak = new PartialTokenMaker(Main.tokenMakerForFile(selectedFile))
+              val origTokMak = Main.tokenMakerForFile(selectedFile)
+              partialTokMak = new PartialTokenMaker(origTokMak)
               syntaxDoc.setSyntaxStyle(partialTokMak)
 
               val source = scala.io.Source.fromFile(selectedFile)
               val text = source.mkString
               source.close()
 
-              // Not the best way to do it,
-              // but set the text..
-              typeTutorKL.text = text
-              textArea.setText(text)
-              textArea.setCaretPosition(0)
-              textArea.getCaret().setVisible(true)
+              val tokenIterable = Utils.tokenIteratorOf(text, origTokMak)
+              val doc = new DocumentImpl(text, tokenIterable)
 
-              // TODO Save, Reset the Score in the typeTutorKL
-              // (What's best to do if user starts typing, then opens file?).
+              updateText(text, doc.initialOffset)
+
+              textCell.send(doc)
             }
 
             ke.consume()
@@ -189,8 +232,8 @@ class TextEditorDemo extends JFrame {
   textArea.addKeyListener(typeTutorKL)
 
   // Disable mouse interaction
-  for (ml <- textArea.getMouseListeners()) { textArea.removeMouseListener(ml) }
-  for (ml <- textArea.getMouseMotionListeners()) { textArea.removeMouseMotionListener(ml) }
+//  for (ml <- textArea.getMouseListeners()) { textArea.removeMouseListener(ml) }
+//  for (ml <- textArea.getMouseMotionListeners()) { textArea.removeMouseMotionListener(ml) }
 
   val sp = new RTextScrollPane(textArea)
   cp.add(sp)
@@ -201,6 +244,8 @@ class TextEditorDemo extends JFrame {
   pack()
   setLocationRelativeTo(null)
 }
+
+
 
 object Main {
   def tokenMakerForFile(f: File): TokenMaker = {

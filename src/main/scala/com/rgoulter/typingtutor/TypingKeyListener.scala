@@ -1,120 +1,192 @@
 package com.rgoulter.typingtutor
 
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 
-class TypedStats(val numTotal: Int,
-                 val numCorrect: Int,
-                 val numIncorrect: Int,
-                 val entries: Array[(Char, Char, Long)]) {
-  // XXX This is a problem if numTotal is 0... :/
-  def print(): Unit = {
-    println(s"Total: $numTotal")
-    println(s"Correct: $numCorrect")
-    println(s"Incorrect: $numIncorrect")
-  }
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
+import org.fife.ui.rsyntaxtextarea.Token
+import org.fife.ui.rsyntaxtextarea.TokenTypes
 
-  val duration: Long = {
-    val start = entries.head._3
-    val end   = entries.last._3
-    end - start
-  }
+import sodium.Cell
+import sodium.CellSink
+import sodium.Stream
+import sodium.StreamSink
 
-  val durationInMins: Double =
-    (duration / 1000).toDouble / 60
 
-  val durationStr: String =
-    s"${(duration / 1000) / 60}:${(duration / 1000) % 60}"
 
-  val accuracy = numCorrect.toDouble / numTotal
+sealed trait TypingEvent
 
-  val accuracyPercent: Int = (accuracy * 100).toInt
 
-  // wpm = (# chars / 5) / (time in mins)
-  // Rounded to int is close enough
-  val wpm = ((numCorrect / 5) / durationInMins).toInt
+
+case class Backspace() extends TypingEvent
+
+
+
+case class TypedCharacter(val c: Char, val time: Long) extends TypingEvent
+
+
+
+case class ResetPosition(pos: Int = 0) extends TypingEvent
+
+
+
+object State {
+  // Since we want to skip over leading whitespace, blank lines,
+  // comments,
+  // and it may be that programs we type begin with these,
+  // initial state shouldn't necessarily be at 0.
+  def initialStateOf(doc: Document): State =
+    State(0, 0, doc.initialOffset)
 }
 
+
+
+// Position represents the latest correctly typed input.
+// Display in RSTA still adds numIncorrect for highlighting typing
+// mistakes.
+case class State(val numCorrect: Int,
+                 val numIncorrect: Int,
+                 val position : Int) {
+}
+
+
+
 // callback: (position, numIncorrect) => ()
-class TypingKeyListener(var text: String,
-                        callback: (Int, Int) => Unit,
-                        endGame: TypedStats => Unit) extends KeyListener {
-  private var lastCorrectPos = 0
-  private var numIncorrect = 0
+class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
+  private val typedEvents = new StreamSink[TypingEvent]
+  // Need to be able to reset the markers on text changing..
+  private val typedOrReset =
+    typedEvents.merge(text.updates().map(t => ResetPosition()),
+                      (te, reset) => reset)
+  val backspaceEvents = typedEvents.filter({
+    case Backspace() => true
+    case _ => false
+  })
+  val typedCharEvents = typedEvents.filter({
+    case TypedCharacter(_, _) => true
+    case _ => false
+  }).map({
+    case TypedCharacter(c, time) => (c, time)
+    case _ => throw new IllegalStateException()
+  })
 
-  private def pos: Int = lastCorrectPos + numIncorrect
+  // lastCorrect is a cell. How?
+  val markers = Cell.switchC(text.map { text =>
+    typedOrReset.accum[State](State.initialStateOf(text), (te, state) => {
+      te match {
+        case ResetPosition(_) => State.initialStateOf(text)
+        case Backspace() => {
+          state match {
+            // Pressed Backspace => Go back a character.
+            case State(numCorrect, 0, position) => { // if numIncorrect == 0
+              // ensure numCorrect >= 0
+              val newNumCorrect = Math.max(0, numCorrect - 1)
 
-  private var numTypedTotal: Int = 0
-  private var numTypedIncorrect: Int = 0
-  
-  private def numTypedCorrect: Int =
-    numTypedTotal - numTypedIncorrect
+              // Try to find a previous position
+              val newPosition =
+                text.previousTypeableOffset(position).getOrElse(position)
+              State(newNumCorrect, 0, newPosition)
+            }
+            case State(numCorrect, numIncorrect, position) => {
+              val newPosition =
+                text.previousTypeableOffset(position).getOrElse(position)
+              State(numCorrect, numIncorrect - 1, position)
+            }
+          }
+        }
+        case TypedCharacter(typedChar, time) => {
+          state match {
+            case State(numCorrect, 0, position) => { // if numIncorrect == 0
+              val expectedChar = text.charAt(position)
 
-  // collect list-of (exp, actual, time)
-  private val mutKeyEntries = new scala.collection.mutable.ArrayBuffer[(Char, Char, Long)](1000)
+              if (expectedChar == typedChar) {
+                // Correctly typed character.
+                // numCorrect < textSize
+                val newNumCorrect = Math.min(numCorrect + 1, text.size)
+                val newPosition =
+                  text.nextTypeableOffset(position).getOrElse(position)
+                State(newNumCorrect, 0, newPosition)
+              } else {
+                // Mis-typed character.
+                // Previously didn't have any incorrect, now we do.
+                State(numCorrect, 1, position)
+              }
+            }
+            case State(numCorrect, numIncorrect, position) => {
+              // **MAGIC** MaxIncorrectRule = 5
+              val newNumIncorrect = Math.min(numIncorrect + 1, 5)
+              State(numCorrect, newNumIncorrect, position)
+            }
+          }
+        }
+      }
+    })
+  })
+  val numCorrect   = markers.map(_.numCorrect)
+  val numIncorrect = markers.map(_.numIncorrect)
+  val currentPos   = markers.map(_.position)
 
-  def stats: TypedStats = {
-    new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect, mutKeyEntries.toArray)
-  }
+  val totalTypedCt = typedEvents.accum[Int](0, (_, n) => n + 1)
+//  totalTypedCt.value().listen { n => println(s"Total Typed: $n keys.") }
+  val totalTypedIncorrectCt = Cell.lift[Int, Int, Int]((total, correct) => total - correct, totalTypedCt, numCorrect)
+
+  // collect list-of (expected, actual, time)
+  private val currentChar =
+    Cell.lift((text: Document, idx: Int) => text.charAt(idx),
+              text,
+              currentPos)
+  val keyEntryEvts =
+    typedCharEvents.snapshot(currentChar, { (typedCharEvt, expectedChar: Char) =>
+      val (typedChar, time) = typedCharEvt
+      (expectedChar, typedChar, time)
+    })
+  val keyEntries: Cell[Array[(Char, Char, Long)]] =
+    keyEntryEvts.accum(Array(), (tup, acc) => { acc :+ tup })
+
+  // TODO 'Quit after typed certain number'
+  // although this needs to distinguish between 'num-typed-correct' and 'position'
+  private val endGameAtEndOfText =
+    Cell.lift((text: Document, currentPos: Int) => currentPos == text.size - 1,
+              text,
+              currentPos).value().filter(b => b)
+  private val endGameSink = new StreamSink[Unit]()
+  val endGame: Stream[Unit] =
+    endGameSink.merge(endGameAtEndOfText.map(_ => ()),
+                      (l, r) => l)
+
+  def stats: Cell[TypedStats] =
+    Cell.lift((numTypedTotal: Int, numTypedCorrect: Int, numTypedIncorrect: Int, keyEntries: Array[(Char, Char, Long)]) =>
+                new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect, keyEntries),
+              totalTypedCt,
+              numCorrect,
+              totalTypedIncorrectCt,
+              keyEntries)
 
   override def keyPressed(ke: KeyEvent): Unit = {}
 
   override def keyReleased(ke: KeyEvent): Unit = {}
 
   override def keyTyped(ke: KeyEvent): Unit = {
-    val expectedChar = text.charAt(pos)
     val pressedChar = ke.getKeyChar
 
     pressedChar match {
       case KeyEvent.VK_ESCAPE => {
-        endGame(stats)
+        endGameSink.send(())
       }
 
       case '\b' => {
-        if (numIncorrect > 0) {
-          numIncorrect -= 1
-        } else if (pos > 0) {
-          lastCorrectPos -= 1
-        }
+        typedEvents.send(Backspace())
       }
 
       // newlines.. are considered as just 'incorrect' characters.
       case c if !ke.isControlDown() => { // what about characters like 'Home'?
-//          println(s"Pressed Key '$charAtPos':$caretPosition <= '$pressedChar'")
-
-        if (pos + 1 < text.length()) {
-          // Keep track of entered things
-          // (Slight discrepancy if we include these all).
-          val timeMillis = System.currentTimeMillis()
-          val entry = (expectedChar, pressedChar, timeMillis)
-          mutKeyEntries += entry
-
-
-          numTypedTotal += 1
-
-          if (numIncorrect == 0 &&
-              pressedChar == expectedChar) {
-            lastCorrectPos += 1
-          } else if (numIncorrect < 5) { // **MAGIC** MaxIncorrectRule = 5
-            numIncorrect += 1
-            numTypedIncorrect += 1
-          }
-
-          if (numTypedCorrect > 1000) { // **MAGIC** MaxCorrectTypedRule = 1000
-            endGame(stats)
-          }
-        } else {
-          // Got to the end.
-          endGame(stats)
-        }
+        val time = System.currentTimeMillis()
+        typedEvents.send(TypedCharacter(c, time))
 
         // The '}' still inserts a character, even if `editable` is false!
         ke.consume()
       }
       case _ => {}
     }
-
-    callback(lastCorrectPos, numIncorrect)
   }
 }
