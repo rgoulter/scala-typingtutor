@@ -21,11 +21,13 @@ import sodium.CellSink
 import javax.swing.text.Segment
 import scala.collection.JavaConverters.asScalaIteratorConverter
 import com.rgoulter.typingtutor.Document
-import com.rgoulter.typingtutor.SimpleDocumentImpl
+import com.rgoulter.typingtutor.DocumentImpl
 import com.rgoulter.typingtutor.SimpleDocumentImpl
 
 class TextEditorDemo extends JFrame {
   // XXX More difficult to extend 'frame', than to just make one..
+
+  import com.rgoulter.typingtutor.Utils
 
   val SampleText = """public class HelloWorld {
   // This is a class
@@ -38,8 +40,10 @@ class TextEditorDemo extends JFrame {
     new Segment(SampleText.toCharArray(), 0, SampleText.length())
   val SampleInitToken =
     SampleTextTokMak.getTokenList(SampleTextSegment, TokenTypes.NULL, 0)
-  val SampleDocument = new SimpleDocumentImpl(SampleText)
-//  com.rgoulter.typingtutor.Utils.dumpTokens(SampleInitToken, "Sample Init Token, init")
+//  Utils.dumpTokens(SampleInitToken, "Sample Init Token, init")
+  val SampleDocument =
+    new DocumentImpl(SampleText,
+                     Utils.tokenIteratorOf(SampleText, SampleTextTokMak))
 
   val cp = new JPanel(new BorderLayout())
 
@@ -50,14 +54,13 @@ class TextEditorDemo extends JFrame {
   // I don't like the idea of a mutable variable;
   // Maybe with appropriate signals/etc. in an FRP system,
   // could attach partialTokMak to listen to TypKL's cursor pos.
-  var partialTokMak = new PartialTokenMaker(SampleTextTokMak)
-  syntaxDoc.setSyntaxStyle(partialTokMak)
+//  var partialTokMak = new PartialTokenMaker(SampleTextTokMak)
+//  syntaxDoc.setSyntaxStyle(partialTokMak)
+  syntaxDoc.setSyntaxStyle(SampleTextTokMak)
 
-  PartialTokenMaker.augmentStyleOfTextArea(textArea)
+//  PartialTokenMaker.augmentStyleOfTextArea(textArea)
 
-//  com.rgoulter.typingtutor.Utils.dumpTokens(SampleInitToken, "Sample Init Token, before CellSink")
   private val textCell = new CellSink[Document](SampleDocument)
-//  com.rgoulter.typingtutor.Utils.dumpTokens(SampleInitToken, "Sample Init Token, after CellSink")
 
   // Every time we set the text..
   def updateText(text: String, initPos: Int = 0): Unit = {
@@ -88,7 +91,7 @@ class TextEditorDemo extends JFrame {
     val selStart = textArea.getSelectionStart
     val selEnd = textArea.getSelectionEnd
 
-    partialTokMak.position = selStart
+//    partialTokMak.position = selStart
     textArea.setText(textArea.getText())
 
     textArea.setCaretPosition(selStart)
@@ -171,14 +174,16 @@ class TextEditorDemo extends JFrame {
 
               // Use the file extension to set/update the TokenMaker
               val origTokMak = Main.tokenMakerForFile(selectedFile)
-              partialTokMak = new PartialTokenMaker(origTokMak)
-              syntaxDoc.setSyntaxStyle(partialTokMak)
+//              partialTokMak = new PartialTokenMaker(origTokMak)
+//              syntaxDoc.setSyntaxStyle(partialTokMak)
+              syntaxDoc.setSyntaxStyle(origTokMak)
 
               val source = scala.io.Source.fromFile(selectedFile)
               val text = source.mkString
               source.close()
 
-              val doc = new SimpleDocumentImpl(text)
+              val tokenIterable = Utils.tokenIteratorOf(text, origTokMak)
+              val doc = new DocumentImpl(text, tokenIterable)
 
               updateText(text, doc.initialOffset)
 

@@ -77,7 +77,7 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
       case TypedCharacter(typedChar, time) => {
         state match {
           case State(numCorrect, 0, position) => { // if numIncorrect == 0
-            val expectedChar = text.sample().charAt(numCorrect)
+            val expectedChar = text.sample().charAt(position)
 
             if (expectedChar == typedChar) {
               // Correctly typed character.

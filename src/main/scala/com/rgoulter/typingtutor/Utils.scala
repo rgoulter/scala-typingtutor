@@ -1,6 +1,10 @@
 package com.rgoulter.typingtutor
 
 import org.fife.ui.rsyntaxtextarea.Token
+import org.fife.ui.rsyntaxtextarea.TokenMaker
+import javax.swing.text.Segment
+import org.fife.ui.rsyntaxtextarea.TokenTypes
+import org.fife.ui.rsyntaxtextarea.TokenImpl
 
 object Utils {
   // DEBUG utility
@@ -14,4 +18,31 @@ object Utils {
     }
   }
 
+  def toTokenSeq(tok: Token): Seq[Token] = {
+    if (tok == null) {
+      Seq.empty
+    } else {
+      // Copy the token, otherwise strange things happen,
+      // and it's difficult to debug what's going on.
+      new TokenImpl(tok) +: toTokenSeq(tok.getNextToken())
+    }
+  }
+
+  def tokenIteratorOf(text: String, tokenMaker: TokenMaker): Iterable[Token] = {
+    // n.b. getTokenList(Segment, initType, offset) gives Token[NullType] at EOL,
+    // whose nextToken() is null.
+
+    val lineOffsets: Seq[Int] =
+      0 +:
+      (text.zipWithIndex.filter({ case (c, idx) => c == '\n' })
+                        .map({ case (c, idx) => idx + 1 }))
+
+    lineOffsets.foldLeft(Seq[Token]())({ (res, offset) =>
+      // TODO by right, TokenTypes.NULL may not be true..
+      val segment = new Segment(text.toCharArray(), offset, text.length() - offset)
+      val tokenSeq = toTokenSeq(tokenMaker.getTokenList(segment, TokenTypes.NULL, offset))
+
+      res ++ tokenSeq
+    })
+  }
 }
