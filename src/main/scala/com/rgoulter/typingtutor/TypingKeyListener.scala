@@ -30,26 +30,7 @@ case class State(val numCorrect: Int = 0,
 }
 
 // callback: (position, numIncorrect) => ()
-class TypingKeyListener(val text: Cell[Token]) extends KeyListener {
-  Utils.dumpTokens(text.sample(), "TypKL text.sample Tokens")
-
-  // Computing the size of the text is somewhat more involved
-  // from `text: Token` compared to `text: String`.
-  private val textSize: Cell[Int] = text.map { initTok =>
-    if (initTok == null) {
-      0
-    } else {
-      var tok = initTok
-
-      while (tok.getNextToken() != null &&
-             tok.getNextToken().getType() != TokenTypes.NULL) {
-        tok = tok.getNextToken()
-      }
-
-      tok.getEndOffset()
-    }
-  }
-
+class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
   private val typedEvents = new StreamSink[TypingEvent]
   // Need to be able to reset the markers on text changing..
   private val typedOrReset =
@@ -86,12 +67,12 @@ class TypingKeyListener(val text: Cell[Token]) extends KeyListener {
       case TypedCharacter(typedChar, time) => {
         state match {
           case State(numCorrect, 0) => { // if numIncorrect == 0
-            val expectedChar = text.sample().charAt(numCorrect - text.sample().getOffset())
+            val expectedChar = text.sample().charAt(numCorrect)
 
             if (expectedChar == typedChar) {
               // Correctly typed character.
               // numCorrect < textSize
-              State(Math.min(numCorrect + 1, textSize.sample()), 0)
+              State(Math.min(numCorrect + 1, text.sample().size), 0)
             } else {
               // Mis-typed character.
               // Previously didn't have any incorrect, now we do.
@@ -118,7 +99,7 @@ class TypingKeyListener(val text: Cell[Token]) extends KeyListener {
   val keyEntryEvts =
     typedCharEvents.map({ case (c, time) => {
       // more idiomatic way of achieving this?
-      val expChar = Cell.lift((text: Token, idx: Int) => text.charAt(idx - text.getOffset()),
+      val expChar = Cell.lift((text: Document, idx: Int) => text.charAt(idx),
                               text,
                               numCorrect).sample()
 
@@ -131,7 +112,7 @@ class TypingKeyListener(val text: Cell[Token]) extends KeyListener {
   // although this needs to distinguish between 'num-typed-correct' and 'position'
   private val endGameAtEndOfText = numCorrect.value().filter { numCorrect =>
     // TODO Slightly imprecise here, as this will escape before we type the last char.
-    numCorrect == textSize.sample()
+    numCorrect == text.sample().size - 1
   }
   private val endGameSink = new StreamSink[Unit]()
   val endGame: Stream[Unit] =

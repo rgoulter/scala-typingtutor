@@ -20,6 +20,9 @@ import org.apache.commons.io.FilenameUtils
 import sodium.CellSink
 import javax.swing.text.Segment
 import scala.collection.JavaConverters.asScalaIteratorConverter
+import com.rgoulter.typingtutor.Document
+import com.rgoulter.typingtutor.SimpleDocumentImpl
+import com.rgoulter.typingtutor.SimpleDocumentImpl
 
 class TextEditorDemo extends JFrame {
   // XXX More difficult to extend 'frame', than to just make one..
@@ -35,6 +38,7 @@ class TextEditorDemo extends JFrame {
     new Segment(SampleText.toCharArray(), 0, SampleText.length())
   val SampleInitToken =
     SampleTextTokMak.getTokenList(SampleTextSegment, TokenTypes.NULL, 0)
+  val SampleDocument = new SimpleDocumentImpl(SampleText)
 //  com.rgoulter.typingtutor.Utils.dumpTokens(SampleInitToken, "Sample Init Token, init")
 
   val cp = new JPanel(new BorderLayout())
@@ -52,7 +56,7 @@ class TextEditorDemo extends JFrame {
   PartialTokenMaker.augmentStyleOfTextArea(textArea)
 
 //  com.rgoulter.typingtutor.Utils.dumpTokens(SampleInitToken, "Sample Init Token, before CellSink")
-  private val textCell = new CellSink[Token](SampleInitToken)
+  private val textCell = new CellSink[Document](SampleDocument)
 //  com.rgoulter.typingtutor.Utils.dumpTokens(SampleInitToken, "Sample Init Token, after CellSink")
 
   // Every time we set the text..
@@ -176,10 +180,11 @@ class TextEditorDemo extends JFrame {
 
               updateText(text)
 
-              val segment = new Segment(text.toCharArray(), 0, text.length())
-              val initToken =
-                origTokMak.getTokenList(segment, TokenTypes.NULL, 0)
-              textCell.send(initToken)
+//              val segment = new Segment(text.toCharArray(), 0, text.length())
+//              val initToken =
+//                origTokMak.getTokenList(segment, TokenTypes.NULL, 0)
+              val doc = new SimpleDocumentImpl(text)
+              textCell.send(doc)
             }
 
             ke.consume()
