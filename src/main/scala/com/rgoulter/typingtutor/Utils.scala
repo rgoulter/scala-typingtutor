@@ -1,10 +1,13 @@
 package com.rgoulter.typingtutor
 
-import org.fife.ui.rsyntaxtextarea.Token
-import org.fife.ui.rsyntaxtextarea.TokenMaker
 import javax.swing.text.Segment
-import org.fife.ui.rsyntaxtextarea.TokenTypes
+
+import org.fife.ui.rsyntaxtextarea.Token
 import org.fife.ui.rsyntaxtextarea.TokenImpl
+import org.fife.ui.rsyntaxtextarea.TokenMaker
+import org.fife.ui.rsyntaxtextarea.TokenTypes
+
+
 
 object Utils {
   // DEBUG utility

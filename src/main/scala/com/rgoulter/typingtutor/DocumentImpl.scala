@@ -1,9 +1,12 @@
 package com.rgoulter.typingtutor
 
-import org.fife.ui.rsyntaxtextarea.Token
-import scala.collection.immutable.SortedSet
 import scala.collection.immutable.BitSet
+import scala.collection.immutable.SortedSet
+
+import org.fife.ui.rsyntaxtextarea.Token
 import org.fife.ui.rsyntaxtextarea.TokenTypes
+
+
 
 class SimpleDocumentImpl(text: String) extends Document {
   def charAt(offset: Int): Char = text.charAt(offset)
@@ -15,6 +18,8 @@ class SimpleDocumentImpl(text: String) extends Document {
     BitSet.empty ++ (0 to size)
   }
 }
+
+
 
 class DocumentImpl(text: String, tokens: Iterable[Token]) extends Document {
   def charAt(offset: Int): Char = text.charAt(offset)

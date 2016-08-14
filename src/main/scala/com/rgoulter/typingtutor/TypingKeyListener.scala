@@ -1,19 +1,34 @@
 package com.rgoulter.typingtutor
 
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
-import org.fife.ui.rsyntaxtextarea.Token
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
+
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
+import org.fife.ui.rsyntaxtextarea.Token
+import org.fife.ui.rsyntaxtextarea.TokenTypes
+
 import sodium.Cell
 import sodium.CellSink
 import sodium.Stream
 import sodium.StreamSink
-import org.fife.ui.rsyntaxtextarea.TokenTypes
+
+
 
 sealed trait TypingEvent
+
+
+
 case class Backspace() extends TypingEvent
+
+
+
 case class TypedCharacter(val c: Char, val time: Long) extends TypingEvent
+
+
+
 case class ResetPosition(pos: Int = 0) extends TypingEvent
+
+
 
 object State {
   // Since we want to skip over leading whitespace, blank lines,
@@ -24,6 +39,8 @@ object State {
     State(0, 0, doc.initialOffset)
 }
 
+
+
 // Position represents the latest correctly typed input.
 // Display in RSTA still adds numIncorrect for highlighting typing
 // mistakes.
@@ -31,6 +48,8 @@ case class State(val numCorrect: Int,
                  val numIncorrect: Int,
                  val position : Int) {
 }
+
+
 
 // callback: (position, numIncorrect) => ()
 class TypingKeyListener(val text: Cell[Document]) extends KeyListener {

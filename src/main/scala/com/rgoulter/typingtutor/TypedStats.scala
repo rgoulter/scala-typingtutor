@@ -1,5 +1,7 @@
 package com.rgoulter.typingtutor
 
+
+
 class TypedStats(val numTotal: Int,
                  val numCorrect: Int,
                  val numIncorrect: Int,

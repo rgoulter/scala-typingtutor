@@ -1,15 +1,19 @@
 package com.rgoulter.typingtutor
 
-import org.fife.ui.rsyntaxtextarea.TokenMaker
-import javax.swing.text.Segment
-import org.fife.ui.rsyntaxtextarea.Token
+import java.awt.Color
+
 import javax.swing.Action
+import javax.swing.text.Segment
+
 import org.fife.ui.rsyntaxtextarea.OccurrenceMarker
-import org.fife.ui.rsyntaxtextarea.TokenImpl
-import org.fife.ui.rsyntaxtextarea.TokenTypes
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.fife.ui.rsyntaxtextarea.Style
-import java.awt.Color
+import org.fife.ui.rsyntaxtextarea.Token
+import org.fife.ui.rsyntaxtextarea.TokenImpl
+import org.fife.ui.rsyntaxtextarea.TokenMaker
+import org.fife.ui.rsyntaxtextarea.TokenTypes
+
+
 
 object PartialTokenMaker {
   val UNTYPED_TOKEN = TokenTypes.DEFAULT_NUM_TOKEN_TYPES + 0;
@@ -26,6 +30,8 @@ object PartialTokenMaker {
   }
 }
 
+
+
 class PartialTokenMaker(tokMak: TokenMaker) extends TokenMaker {
   // How far to keep "dull"
   var position: Int = 0
@@ -33,8 +39,8 @@ class PartialTokenMaker(tokMak: TokenMaker) extends TokenMaker {
 
 
   def addToken(array: Array[Char], start: Int, end: Int, tokenType: Int, startOffset: Int): Unit = {
-    // This one isn't used? Ok then..
-    println("OUR PARTIAL addTOKEN!")
+    // This one isn't used? Ok then.
+    // println("OUR PARTIAL addTOKEN!")
 
     tokMak.addToken(array, start, end, tokenType, startOffset)
   }

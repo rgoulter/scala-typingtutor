@@ -1,28 +1,36 @@
 import java.awt.BorderLayout
-import javax.swing._
-import org.fife.ui.rtextarea._
-import org.fife.ui.rsyntaxtextarea._
-import java.awt.event.KeyListener
-import java.awt.event.KeyEvent
-import com.rgoulter.typingtutor.PartialTokenMaker
-import org.fife.ui.rsyntaxtextarea.modes.JavaTokenMaker
-import javax.swing.event.CaretListener
-import javax.swing.event.CaretEvent
-import java.awt.event.MouseListener
-import java.awt.event.MouseEvent
-import com.rgoulter.typingtutor.TypingKeyListener
 import java.awt.Color
 import java.awt.Point
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.io.File
-import org.apache.commons.io.FilenameUtils
-import sodium.CellSink
+
+import javax.swing._
+import javax.swing.event.CaretEvent
+import javax.swing.event.CaretListener
 import javax.swing.text.Segment
+
 import scala.collection.JavaConverters.asScalaIteratorConverter
+
+import org.apache.commons.io.FilenameUtils
+
+import org.fife.ui.rtextarea._
+import org.fife.ui.rsyntaxtextarea._
+import org.fife.ui.rsyntaxtextarea.modes.JavaTokenMaker
+
+import sodium.CellSink
+
 import com.rgoulter.typingtutor.Document
 import com.rgoulter.typingtutor.DocumentImpl
+import com.rgoulter.typingtutor.PartialTokenMaker
 import com.rgoulter.typingtutor.SimpleDocumentImpl
+import com.rgoulter.typingtutor.TypingKeyListener
+
+
 
 class TextEditorDemo extends JFrame {
   // XXX More difficult to extend 'frame', than to just make one..
@@ -236,6 +244,8 @@ class TextEditorDemo extends JFrame {
   pack()
   setLocationRelativeTo(null)
 }
+
+
 
 object Main {
   def tokenMakerForFile(f: File): TokenMaker = {
