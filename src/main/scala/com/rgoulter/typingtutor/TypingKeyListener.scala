@@ -130,17 +130,16 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
 //  totalTypedCt.value().listen { n => println(s"Total Typed: $n keys.") }
   val totalTypedIncorrectCt = Cell.lift[Int, Int, Int]((total, correct) => total - correct, totalTypedCt, numCorrect)
 
-  // collect list-of (exp, actual, time)
-//  val keyEntryEvts = new Stream[(Char, Char, Long)]()
+  // collect list-of (expected, actual, time)
+  private val currentChar =
+    Cell.lift((text: Document, idx: Int) => text.charAt(idx),
+              text,
+              currentPos)
   val keyEntryEvts =
-    typedCharEvents.map({ case (c, time) => {
-      // more idiomatic way of achieving this?
-      val expChar = Cell.lift((text: Document, idx: Int) => text.charAt(idx),
-                              text,
-                              currentPos).sample()
-
-      (expChar, c, time)
-    }})
+    typedCharEvents.snapshot(currentChar, { (typedCharEvt, expectedChar: Char) =>
+      val (typedChar, time) = typedCharEvt
+      (expectedChar, typedChar, time)
+    })
   val keyEntries: Cell[Array[(Char, Char, Long)]] =
     keyEntryEvts.accum(Array(), (tup, acc) => { acc :+ tup })
 
