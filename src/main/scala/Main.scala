@@ -43,7 +43,6 @@ class TextEditorDemo extends JFrame {
     new Segment(SampleText.toCharArray(), 0, SampleText.length())
   val SampleInitToken =
     SampleTextTokMak.getTokenList(SampleTextSegment, TokenTypes.NULL, 0)
-//  Utils.dumpTokens(SampleInitToken, "Sample Init Token, init")
   val SampleDocument =
     new DocumentImpl(SampleText,
                      Utils.tokenIteratorOf(SampleText, SampleTextTokMak))
@@ -57,11 +56,10 @@ class TextEditorDemo extends JFrame {
   // I don't like the idea of a mutable variable;
   // Maybe with appropriate signals/etc. in an FRP system,
   // could attach partialTokMak to listen to TypKL's cursor pos.
-//  var partialTokMak = new PartialTokenMaker(SampleTextTokMak)
-//  syntaxDoc.setSyntaxStyle(partialTokMak)
-  syntaxDoc.setSyntaxStyle(SampleTextTokMak)
+  var partialTokMak = new PartialTokenMaker(SampleTextTokMak)
+  syntaxDoc.setSyntaxStyle(partialTokMak)
 
-//  PartialTokenMaker.augmentStyleOfTextArea(textArea)
+  PartialTokenMaker.augmentStyleOfTextArea(textArea)
 
   private val textCell = new CellSink[Document](SampleDocument)
 
@@ -94,7 +92,7 @@ class TextEditorDemo extends JFrame {
     val selStart = textArea.getSelectionStart
     val selEnd = textArea.getSelectionEnd
 
-//    partialTokMak.position = selStart
+    partialTokMak.position = selStart
     textArea.setText(textArea.getText())
 
     textArea.setCaretPosition(selStart)
@@ -177,9 +175,8 @@ class TextEditorDemo extends JFrame {
 
               // Use the file extension to set/update the TokenMaker
               val origTokMak = Main.tokenMakerForFile(selectedFile)
-//              partialTokMak = new PartialTokenMaker(origTokMak)
-//              syntaxDoc.setSyntaxStyle(partialTokMak)
-              syntaxDoc.setSyntaxStyle(origTokMak)
+              partialTokMak = new PartialTokenMaker(origTokMak)
+              syntaxDoc.setSyntaxStyle(partialTokMak)
 
               val source = scala.io.Source.fromFile(selectedFile)
               val text = source.mkString
@@ -190,9 +187,6 @@ class TextEditorDemo extends JFrame {
 
               updateText(text, doc.initialOffset)
 
-//              val segment = new Segment(text.toCharArray(), 0, text.length())
-//              val initToken =
-//                origTokMak.getTokenList(segment, TokenTypes.NULL, 0)
               textCell.send(doc)
             }
 
