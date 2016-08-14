@@ -145,10 +145,10 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
 
   // TODO 'Quit after typed certain number'
   // although this needs to distinguish between 'num-typed-correct' and 'position'
-  private val endGameAtEndOfText = currentPos.value().filter { currentPos =>
-    // TODO Slightly imprecise here, as this will escape before we type the last char.
-    currentPos == text.sample().size - 1
-  }
+  private val endGameAtEndOfText =
+    Cell.lift((text: Document, currentPos: Int) => currentPos == text.size - 1,
+              text,
+              currentPos).value().filter(b => b)
   private val endGameSink = new StreamSink[Unit]()
   val endGame: Stream[Unit] =
     endGameSink.merge(endGameAtEndOfText.map(_ => ()),
