@@ -9,4 +9,12 @@ abstract class Document {
   val size: Int;
 
   val typeableOffsets: SortedSet[Int];
+
+  // Return the previous typeable offset, if it exists.
+  def previousTypeableOffset(offset: Int): Option[Int] =
+    typeableOffsets.to(offset - 1).lastOption
+
+  // Return the previous typeable offset, if it exists.
+  def nextTypeableOffset(offset: Int): Option[Int] =
+    typeableOffsets.from(offset + 1).headOption
 }

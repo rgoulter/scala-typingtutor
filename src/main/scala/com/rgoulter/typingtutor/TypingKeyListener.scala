@@ -21,12 +21,15 @@ object State {
   // and it may be that programs we type begin with these,
   // initial state shouldn't necessarily be at 0.
   def initialStateOf(): State =
-    State()
+    State(0, 0, 0)
 }
 
-case class State(val numCorrect: Int = 0,
-                 val numIncorrect: Int = 0) {
-  val position = numCorrect
+// Position represents the latest correctly typed input.
+// Display in RSTA still adds numIncorrect for highlighting typing
+// mistakes.
+case class State(val numCorrect: Int,
+                 val numIncorrect: Int,
+                 val position : Int) {
 }
 
 // callback: (position, numIncorrect) => ()
@@ -55,33 +58,44 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
       case Backspace() => {
         state match {
           // Pressed Backspace => Go back a character.
-          case State(numCorrect, 0) => { // if numIncorrect == 0
+          case State(numCorrect, 0, position) => { // if numIncorrect == 0
             // ensure numCorrect >= 0
-            State(Math.max(0, numCorrect - 1), 0)
+            val newNumCorrect = Math.max(0, numCorrect - 1)
+
+            // Try to find a previous position
+            val newPosition =
+              text.sample().previousTypeableOffset(position).getOrElse(position)
+            State(newNumCorrect, 0, newPosition)
           }
-          case State(numCorrect, numIncorrect) => {
-            State(numCorrect, numIncorrect - 1)
+          case State(numCorrect, numIncorrect, position) => {
+            val newPosition =
+              text.sample().previousTypeableOffset(position).getOrElse(position)
+            State(numCorrect, numIncorrect - 1, position)
           }
         }
       }
       case TypedCharacter(typedChar, time) => {
         state match {
-          case State(numCorrect, 0) => { // if numIncorrect == 0
+          case State(numCorrect, 0, position) => { // if numIncorrect == 0
             val expectedChar = text.sample().charAt(numCorrect)
 
             if (expectedChar == typedChar) {
               // Correctly typed character.
               // numCorrect < textSize
-              State(Math.min(numCorrect + 1, text.sample().size), 0)
+              val newNumCorrect = Math.min(numCorrect + 1, text.sample().size)
+              val newPosition =
+                text.sample().nextTypeableOffset(position).getOrElse(position)
+              State(newNumCorrect, 0, newPosition)
             } else {
               // Mis-typed character.
               // Previously didn't have any incorrect, now we do.
-              State(numCorrect, 1)
+              State(numCorrect, 1, position)
             }
           }
-          case State(numCorrect, numIncorrect) => {
+          case State(numCorrect, numIncorrect, position) => {
             // **MAGIC** MaxIncorrectRule = 5
-            State(numCorrect, Math.min(numIncorrect + 1, 5))
+            val newNumIncorrect = Math.min(numIncorrect + 1, 5)
+            State(numCorrect, newNumIncorrect, position)
           }
         }
       }
@@ -89,6 +103,7 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
   })
   val numCorrect   = markers.map(_.numCorrect)
   val numIncorrect = markers.map(_.numIncorrect)
+  val currentPos   = markers.map(_.position)
 
   val totalTypedCt = typedEvents.accum[Int](0, (_, n) => n + 1)
 //  totalTypedCt.value().listen { n => println(s"Total Typed: $n keys.") }
@@ -101,7 +116,7 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
       // more idiomatic way of achieving this?
       val expChar = Cell.lift((text: Document, idx: Int) => text.charAt(idx),
                               text,
-                              numCorrect).sample()
+                              currentPos).sample()
 
       (expChar, c, time)
     }})
@@ -110,9 +125,9 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
 
   // TODO 'Quit after typed certain number'
   // although this needs to distinguish between 'num-typed-correct' and 'position'
-  private val endGameAtEndOfText = numCorrect.value().filter { numCorrect =>
+  private val endGameAtEndOfText = currentPos.value().filter { currentPos =>
     // TODO Slightly imprecise here, as this will escape before we type the last char.
-    numCorrect == text.sample().size - 1
+    currentPos == text.sample().size - 1
   }
   private val endGameSink = new StreamSink[Unit]()
   val endGame: Stream[Unit] =
