@@ -71,54 +71,56 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
   })
 
   // lastCorrect is a cell. How?
-  val markers = typedOrReset.accum[State](State.initialStateOf(text.sample()), (te, state) => {
-    te match {
-      case ResetPosition(_) => State.initialStateOf(text.sample())
-      case Backspace() => {
-        state match {
-          // Pressed Backspace => Go back a character.
-          case State(numCorrect, 0, position) => { // if numIncorrect == 0
-            // ensure numCorrect >= 0
-            val newNumCorrect = Math.max(0, numCorrect - 1)
+  val markers = Cell.switchC(text.map { text =>
+    typedOrReset.accum[State](State.initialStateOf(text), (te, state) => {
+      te match {
+        case ResetPosition(_) => State.initialStateOf(text)
+        case Backspace() => {
+          state match {
+            // Pressed Backspace => Go back a character.
+            case State(numCorrect, 0, position) => { // if numIncorrect == 0
+              // ensure numCorrect >= 0
+              val newNumCorrect = Math.max(0, numCorrect - 1)
 
-            // Try to find a previous position
-            val newPosition =
-              text.sample().previousTypeableOffset(position).getOrElse(position)
-            State(newNumCorrect, 0, newPosition)
-          }
-          case State(numCorrect, numIncorrect, position) => {
-            val newPosition =
-              text.sample().previousTypeableOffset(position).getOrElse(position)
-            State(numCorrect, numIncorrect - 1, position)
-          }
-        }
-      }
-      case TypedCharacter(typedChar, time) => {
-        state match {
-          case State(numCorrect, 0, position) => { // if numIncorrect == 0
-            val expectedChar = text.sample().charAt(position)
-
-            if (expectedChar == typedChar) {
-              // Correctly typed character.
-              // numCorrect < textSize
-              val newNumCorrect = Math.min(numCorrect + 1, text.sample().size)
+              // Try to find a previous position
               val newPosition =
-                text.sample().nextTypeableOffset(position).getOrElse(position)
+                text.previousTypeableOffset(position).getOrElse(position)
               State(newNumCorrect, 0, newPosition)
-            } else {
-              // Mis-typed character.
-              // Previously didn't have any incorrect, now we do.
-              State(numCorrect, 1, position)
+            }
+            case State(numCorrect, numIncorrect, position) => {
+              val newPosition =
+                text.previousTypeableOffset(position).getOrElse(position)
+              State(numCorrect, numIncorrect - 1, position)
             }
           }
-          case State(numCorrect, numIncorrect, position) => {
-            // **MAGIC** MaxIncorrectRule = 5
-            val newNumIncorrect = Math.min(numIncorrect + 1, 5)
-            State(numCorrect, newNumIncorrect, position)
+        }
+        case TypedCharacter(typedChar, time) => {
+          state match {
+            case State(numCorrect, 0, position) => { // if numIncorrect == 0
+              val expectedChar = text.charAt(position)
+
+              if (expectedChar == typedChar) {
+                // Correctly typed character.
+                // numCorrect < textSize
+                val newNumCorrect = Math.min(numCorrect + 1, text.size)
+                val newPosition =
+                  text.nextTypeableOffset(position).getOrElse(position)
+                State(newNumCorrect, 0, newPosition)
+              } else {
+                // Mis-typed character.
+                // Previously didn't have any incorrect, now we do.
+                State(numCorrect, 1, position)
+              }
+            }
+            case State(numCorrect, numIncorrect, position) => {
+              // **MAGIC** MaxIncorrectRule = 5
+              val newNumIncorrect = Math.min(numIncorrect + 1, 5)
+              State(numCorrect, newNumIncorrect, position)
+            }
           }
         }
       }
-    }
+    })
   })
   val numCorrect   = markers.map(_.numCorrect)
   val numIncorrect = markers.map(_.numIncorrect)
