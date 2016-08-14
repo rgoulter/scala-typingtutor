@@ -31,7 +31,10 @@ class TextEditorDemo extends JFrame {
 
   val SampleText = """public class HelloWorld {
   // This is a class
+
   public static void main(String args[]) {
+    int x; // trailing comment
+
     println("Hello World!");
   }
 }"""
