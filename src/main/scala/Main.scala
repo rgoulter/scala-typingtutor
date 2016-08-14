@@ -66,7 +66,7 @@ class TextEditorDemo extends JFrame {
     textArea.getCaret().setVisible(true)
   }
 
-  updateText(SampleText)
+  updateText(SampleText, SampleDocument.initialOffset)
 
   textArea.setEditable(false)
   textArea.setHighlightCurrentLine(false)
@@ -178,12 +178,13 @@ class TextEditorDemo extends JFrame {
               val text = source.mkString
               source.close()
 
-              updateText(text)
+              val doc = new SimpleDocumentImpl(text)
+
+              updateText(text, doc.initialOffset)
 
 //              val segment = new Segment(text.toCharArray(), 0, text.length())
 //              val initToken =
 //                origTokMak.getTokenList(segment, TokenTypes.NULL, 0)
-              val doc = new SimpleDocumentImpl(text)
               textCell.send(doc)
             }
 

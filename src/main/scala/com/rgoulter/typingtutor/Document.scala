@@ -10,6 +10,8 @@ abstract class Document {
 
   val typeableOffsets: SortedSet[Int];
 
+  lazy val initialOffset: Int = typeableOffsets.head
+
   // Return the previous typeable offset, if it exists.
   def previousTypeableOffset(offset: Int): Option[Int] =
     typeableOffsets.to(offset - 1).lastOption

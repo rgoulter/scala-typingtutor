@@ -20,8 +20,8 @@ object State {
   // comments,
   // and it may be that programs we type begin with these,
   // initial state shouldn't necessarily be at 0.
-  def initialStateOf(): State =
-    State(0, 0, 0)
+  def initialStateOf(doc: Document): State =
+    State(0, 0, doc.initialOffset)
 }
 
 // Position represents the latest correctly typed input.
@@ -52,9 +52,9 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
   })
 
   // lastCorrect is a cell. How?
-  val markers = typedOrReset.accum[State](State.initialStateOf(), (te, state) => {
+  val markers = typedOrReset.accum[State](State.initialStateOf(text.sample()), (te, state) => {
     te match {
-      case ResetPosition(_) => State.initialStateOf()
+      case ResetPosition(_) => State.initialStateOf(text.sample())
       case Backspace() => {
         state match {
           // Pressed Backspace => Go back a character.
