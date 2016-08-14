@@ -3,3 +3,8 @@
 .project
 project/
 target/
+
+# Cucumber Things
+cucumber-html/
+cucumber-junit-report.xml
+cucumber.json

@@ -13,3 +13,21 @@ libraryDependencies += "org.apache.directory.studio" % "org.apache.commons.io" %
 // libraryDependencies += "nz.sodium" % "sodium" % "1.1.0" withSources() withJavadoc()
 
 libraryDependencies += "sodium" % "sodium_2.11" % "1.0" withSources() withJavadoc()
+
+
+libraryDependencies ++= Seq (
+        "info.cukes" % "cucumber-core" % "1.2.4" % "test",
+        "info.cukes" %% "cucumber-scala" % "1.2.4" % "test",
+        "info.cukes" % "cucumber-jvm" % "1.2.4" % "test",
+        "info.cukes" % "cucumber-junit" % "1.2.4" % "test",
+        "org.scalatest" %% "scalatest" % "2.2.4" % "test")
+
+enablePlugins(CucumberPlugin)
+
+CucumberPlugin.glue := "com/rgoulter/cuke/"
+
+def beforeAll() : Unit = { println("** hello **") }
+def afterAll() : Unit = { println("** goodbye **") }
+
+CucumberPlugin.beforeAll := beforeAll
+CucumberPlugin.afterAll := afterAll
