@@ -18,6 +18,8 @@ import java.awt.event.WindowEvent
 import java.io.File
 import org.apache.commons.io.FilenameUtils
 import sodium.CellSink
+import javax.swing.text.Segment
+import scala.collection.JavaConverters.asScalaIteratorConverter
 
 class TextEditorDemo extends JFrame {
   // XXX More difficult to extend 'frame', than to just make one..
@@ -25,37 +27,42 @@ class TextEditorDemo extends JFrame {
   val SampleText = """public class HelloWorld {
   // This is a class
   public static void main(String args[]) {
-    println("Hello World!")
+    println("Hello World!");
   }
 }"""
+  val SampleTextTokMak = new JavaTokenMaker()
+  val SampleTextSegment =
+    new Segment(SampleText.toCharArray(), 0, SampleText.length())
+  val SampleInitToken =
+    SampleTextTokMak.getTokenList(SampleTextSegment, TokenTypes.NULL, 0)
+//  com.rgoulter.typingtutor.Utils.dumpTokens(SampleInitToken, "Sample Init Token, init")
 
   val cp = new JPanel(new BorderLayout())
 
   val textArea = new RSyntaxTextArea(20, 60)
 
-  val syntaxDoc = textArea.getDocument().asInstanceOf[RSyntaxDocument]
+  val syntaxDoc = textArea.getDocument().asInstanceOf[RSyntaxDocument];
 
   // I don't like the idea of a mutable variable;
   // Maybe with appropriate signals/etc. in an FRP system,
   // could attach partialTokMak to listen to TypKL's cursor pos.
-  var partialTokMak = new PartialTokenMaker(new JavaTokenMaker())
+  var partialTokMak = new PartialTokenMaker(SampleTextTokMak)
   syntaxDoc.setSyntaxStyle(partialTokMak)
 
   PartialTokenMaker.augmentStyleOfTextArea(textArea)
 
-  private val textCell = new CellSink[String](SampleText)
+//  com.rgoulter.typingtutor.Utils.dumpTokens(SampleInitToken, "Sample Init Token, before CellSink")
+  private val textCell = new CellSink[Token](SampleInitToken)
+//  com.rgoulter.typingtutor.Utils.dumpTokens(SampleInitToken, "Sample Init Token, after CellSink")
 
   // Every time we set the text..
-  textCell.value().listen(text => {
+  def updateText(text: String, initPos: Int = 0): Unit = {
     textArea.setText(text)
-    textArea.setCaretPosition(0)
+    textArea.setCaretPosition(initPos)
     textArea.getCaret().setVisible(true)
+  }
 
-              // TODO Save, Reset the Score in the typeTutorKL
-              // (What's best to do if user starts typing, then opens file?).
-  })
-
-//  textArea.setText(SampleText) //XXX
+  updateText(SampleText)
 
   textArea.setEditable(false)
   textArea.setHighlightCurrentLine(false)
@@ -159,14 +166,20 @@ class TextEditorDemo extends JFrame {
               val selectedFile = chooser.getSelectedFile()
 
               // Use the file extension to set/update the TokenMaker
-              partialTokMak = new PartialTokenMaker(Main.tokenMakerForFile(selectedFile))
+              val origTokMak = Main.tokenMakerForFile(selectedFile)
+              partialTokMak = new PartialTokenMaker(origTokMak)
               syntaxDoc.setSyntaxStyle(partialTokMak)
 
               val source = scala.io.Source.fromFile(selectedFile)
               val text = source.mkString
               source.close()
 
-              textCell.send(text)
+              updateText(text)
+
+              val segment = new Segment(text.toCharArray(), 0, text.length())
+              val initToken =
+                origTokMak.getTokenList(segment, TokenTypes.NULL, 0)
+              textCell.send(initToken)
             }
 
             ke.consume()
