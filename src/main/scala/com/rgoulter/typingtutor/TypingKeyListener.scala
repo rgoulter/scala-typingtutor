@@ -86,7 +86,6 @@ class TypingKeyListener(val text: Cell[String]) extends KeyListener {
   })
 
   // lastCorrect is a cell. How?
-  // XXX:STATE
   val markers = typedOrReset.accum[State](State.initialStateOf(), (te, state) => {
     te match {
       case ResetPosition(_) => State.initialStateOf()
