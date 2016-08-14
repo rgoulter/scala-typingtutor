@@ -2,31 +2,28 @@ package com.rgoulter.typingtutor
 
 import scala.collection.immutable.BitSet
 import scala.collection.immutable.SortedSet
-
 import org.fife.ui.rsyntaxtextarea.Token
 import org.fife.ui.rsyntaxtextarea.TokenTypes
+import scala.collection.immutable.TreeMap
 
 
 
 class SimpleDocumentImpl(text: String) extends Document {
-  def charAt(offset: Int): Char = text.charAt(offset)
-
   val size: Int = text.size
 
-  val typeableOffsets: SortedSet[Int] = {
+  val expectedChars: TreeMap[Int, Char] = {
     // whole range is typeable.
-    BitSet.empty ++ (0 to size)
+    val pairs = Range(0, size).toList.zip(text)
+    new TreeMap[Int, Char]() ++ pairs
   }
 }
 
 
 
 class DocumentImpl(text: String, tokens: Iterable[Token]) extends Document {
-  def charAt(offset: Int): Char = text.charAt(offset)
-
   val size: Int = text.size
 
-  val typeableOffsets: SortedSet[Int] = {
+  val expectedChars: TreeMap[Int, Char] = {
     // Ideally, we:
     // - skip comments, (incl. trailing)
     // - skip leading spaces,
@@ -76,19 +73,19 @@ class DocumentImpl(text: String, tokens: Iterable[Token]) extends Document {
       }
     })
 
-    BitSet.empty ++ (0 to size)
-    simplifiedTokens.foldLeft(BitSet.empty) { (bitset, tok) =>
+    simplifiedTokens.foldLeft(new TreeMap[Int,Char]()) { (map, tok) =>
       if (tok.getType() == TokenTypes.NULL) {
         // This isn't quite right; the 'expected char' will be the character at
         // `bitset.last + 1`, whereas we want the expectedChar to be '\n'.
-        bitset + (bitset.last + 1)
+        val nextTup = ((map.last._1 + 1), '\n')
+        map + nextTup
       } else if (tok.isWhitespace()) {
         // Limit whitespace characters we expect to just 1.
         val tokRange = Range(tok.getOffset(), tok.getOffset() + 1)
-        bitset ++ tokRange
+        map ++ tokRange.zip(tokRange.map(text.charAt))
       } else {
         val tokRange = Range(tok.getOffset(), tok.getEndOffset())
-        bitset ++ tokRange
+        map ++ tokRange.zip(tokRange.map(text.charAt))
       }
     }
   }

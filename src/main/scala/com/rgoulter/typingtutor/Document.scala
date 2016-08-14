@@ -1,16 +1,20 @@
 package com.rgoulter.typingtutor
 
+import scala.collection.immutable.SortedMap
 import scala.collection.immutable.SortedSet
 
 
 
 abstract class Document {
-//      charAt(), and tokenAt(), and documentSize..?
-  def charAt(offset: Int): Char;
+  def charAt(offset: Int): Char =
+    expectedChars(offset)
 
   val size: Int;
 
-  val typeableOffsets: SortedSet[Int];
+  val expectedChars: SortedMap[Int, Char];
+
+  lazy val typeableOffsets: SortedSet[Int] =
+    expectedChars.keySet;
 
   lazy val initialOffset: Int = typeableOffsets.head
 
