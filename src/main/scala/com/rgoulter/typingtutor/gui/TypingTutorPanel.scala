@@ -170,6 +170,10 @@ class TypingTutorPanel(text: String,
   })
 
 
+  /** Stats, emitted only at the end of the game/lesson. */
+  val statsStream = typeTutorKL.endGame.snapshot(typeTutorKL.stats)
+
+
   val scrollPane = new RTextScrollPane(textArea)
   setLayout(new BorderLayout())
   add(scrollPane)
