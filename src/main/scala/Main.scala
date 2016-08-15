@@ -16,8 +16,6 @@ import javax.swing.text.Segment
 
 import scala.collection.JavaConverters.asScalaIteratorConverter
 
-import org.apache.commons.io.FilenameUtils
-
 import org.fife.ui.rtextarea._
 import org.fife.ui.rsyntaxtextarea._
 import org.fife.ui.rsyntaxtextarea.modes.JavaTokenMaker
@@ -82,7 +80,7 @@ class TextEditorDemo extends JFrame {
               val selectedFile = chooser.getSelectedFile()
 
               // Use the file extension to set/update the TokenMaker
-              val origTokMak = Main.tokenMakerForFile(selectedFile)
+              val origTokMak = Utils.tokenMakerForFile(selectedFile)
               partialTokMak = new PartialTokenMaker(origTokMak)
               syntaxDoc.setSyntaxStyle(partialTokMak)
 
@@ -254,63 +252,6 @@ class TextEditorDemo extends JFrame {
 
 
 object Main {
-  def tokenMakerForFile(f: File): TokenMaker = {
-    import org.fife.ui.rsyntaxtextarea.modes._
-
-    // Special cases
-    if (f.getName() == "makefile") {
-      return new MakefileTokenMaker()
-    }
-
-    val ext = FilenameUtils.getExtension(f.getName())
-
-    // Not all the filetypes RSyntaxTextArea supports
-    // are here; some extensions missing.
-//       * x86 asm?
-//       * bbcode??
-//       * delphi?
-//       * dockerfile?
-//       * fortran?
-//       * ....
-//       * lisp??
-    ext match {
-      case "as"     => new ActionScriptTokenMaker()
-      case "c"      => new CTokenMaker()
-      case "clj"    => new ClojureTokenMaker()
-      case "cpp"    => new CPlusPlusTokenMaker()
-      case "cs"     => new CSharpTokenMaker()
-      case "css"    => new CSSTokenMaker()
-      case "d"      => new DTokenMaker()
-      case "dart"   => new DartTokenMaker()
-      case "dtd"    => new DtdTokenMaker()
-      case "groovy" => new GroovyTokenMaker()
-      case "html"   => new HTMLTokenMaker()
-      case "java"   => new JavaTokenMaker()
-      case "js"     => new JavaScriptTokenMaker()
-      case "json"   => new JsonTokenMaker()
-      case "jsp"    => new JSPTokenMaker()
-      case "tex"    => new LatexTokenMaker()
-      case "less"   => new LessTokenMaker()
-      case "lua"    => new LuaTokenMaker()
-      case "mk"     => new MakefileTokenMaker()
-      case "pl"     => new PerlTokenMaker()
-      case "php"    => new PHPTokenMaker()
-      case "py"     => new PythonTokenMaker()
-      case "rb"     => new RubyTokenMaker()
-      case "sas"    => new SASTokenMaker() // ???
-      case "scala"  => new ScalaTokenMaker()
-      case "sql"    => new SQLTokenMaker()
-      case "tcl"    => new TclTokenMaker()
-//      case "ts"     => new TypeScriptTokenMaker()
-      case "sh"     => new UnixShellTokenMaker()
-      case "vb"     => new VisualBasicTokenMaker()
-      case "bat"    => new WindowsBatchTokenMaker()
-      case "xml"    => new XMLTokenMaker()
-      case _ => new PlainTextTokenMaker()
-    }
-  }
-
-
   def main(args: Array[String]): Unit = {
     // Start all Swing applications on the EDT.
     SwingUtilities.invokeLater(new Runnable() {
