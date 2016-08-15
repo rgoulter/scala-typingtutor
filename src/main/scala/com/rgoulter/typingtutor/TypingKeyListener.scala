@@ -60,23 +60,19 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
     * Represents events received in the [[KeyEvent]] of [[keyTyped]] calls.
     */
   private val typedEvents = new StreamSink[TypingEvent]
-  // unused
-  val backspaceEvents = typedEvents.filter({
-    case Backspace() => true
-    case _ => false
-  })
+
   /** Stream of `(character, time)` values, representing
     *  which keys were pressed at what time.
-    *
-    * Should be private.
     */
-  val typedCharEvents = typedEvents.filter({
+  private val typedCharEvents = typedEvents.filter({
     case TypedCharacter(_, _) => true
     case _ => false
   }).map({
     case TypedCharacter(c, time) => (c, time)
     case _ => throw new IllegalStateException()
   })
+
+
 
   /** Stream of the [[State]] of the typing tutor.
     *
@@ -132,47 +128,69 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
       }
     })
   })
+
   val numCorrect   = markers.map(_.numCorrect)
+
   val numIncorrect = markers.map(_.numIncorrect)
-  /** Current offset into the document. (Doesn't include `numIncorrect` in this calculation). */
+
+  /** Current offset into the document. (Doesn't include `numIncorrect` in this
+    * calculation).
+    */
   val currentPos   = markers.map(_.position)
 
+
+
   val totalTypedCt = typedEvents.accum[Int](0, (_, n) => n + 1)
-//  totalTypedCt.value().listen { n => println(s"Total Typed: $n keys.") }
-  val totalTypedIncorrectCt = Cell.lift[Int, Int, Int]((total, correct) => total - correct, totalTypedCt, numCorrect)
+
+  val totalTypedIncorrectCt =
+    Cell.lift[Int, Int, Int]((total, correct) => total - correct,
+                             totalTypedCt,
+                             numCorrect)
+
+
 
   // collect list-of (expected, actual, time)
   private val currentChar =
     Cell.lift((text: Document, idx: Int) => text.charAt(idx),
               text,
               currentPos)
+
   /** Stream of `(actual char, expected char, time)` values. */
   val keyEntryEvts =
     typedCharEvents.snapshot(currentChar, { (typedCharEvt, expectedChar: Char) =>
       val (typedChar, time) = typedCharEvt
       (expectedChar, typedChar, time)
     })
+
   val keyEntries: Cell[Array[(Char, Char, Long)]] =
     keyEntryEvts.accum(Array(), (tup, acc) => { acc :+ tup })
+
+
 
   // TODO 'Quit after typed certain number'
   private val endGameAtEndOfText =
     Cell.lift((text: Document, currentPos: Int) => currentPos == text.size - 1,
               text,
               currentPos).value().filter(b => b)
+
   private val endGameSink = new StreamSink[Unit]()
+
   /** Stream for when the typing tutor should finish. (e.g. user has typed in enough). */
   val endGame: Stream[Unit] =
     endGameSink.merge(endGameAtEndOfText.map(_ => ()),
                       (l, r) => l)
 
-  def stats: Cell[TypedStats] =
+
+
+  val stats: Cell[TypedStats] =
     Cell.lift((numTypedTotal: Int, numTypedCorrect: Int, numTypedIncorrect: Int, keyEntries: Array[(Char, Char, Long)]) =>
                 new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect, keyEntries),
               totalTypedCt,
               numCorrect,
               totalTypedIncorrectCt,
               keyEntries)
+
+
 
   override def keyPressed(ke: KeyEvent): Unit = {}
 
