@@ -18,7 +18,6 @@ import scala.collection.JavaConverters.asScalaIteratorConverter
 
 import org.fife.ui.rtextarea._
 import org.fife.ui.rsyntaxtextarea._
-import org.fife.ui.rsyntaxtextarea.modes.JavaTokenMaker
 
 import sodium.CellSink
 
@@ -34,24 +33,8 @@ class TextEditorDemo extends JFrame {
   // XXX More difficult to extend 'frame', than to just make one..
 
   import com.rgoulter.typingtutor.Utils
-
-  val SampleText = """public class HelloWorld {
-  // This is a class
-
-  public static void main(String args[]) {
-    int x; // trailing comment
-
-    println("Hello World!");
-  }
-}"""
-  val SampleTextTokMak = new JavaTokenMaker()
-  val SampleTextSegment =
-    new Segment(SampleText.toCharArray(), 0, SampleText.length())
-  val SampleInitToken =
-    SampleTextTokMak.getTokenList(SampleTextSegment, TokenTypes.NULL, 0)
-  val SampleDocument =
-    new DocumentImpl(SampleText,
-                     Utils.tokenIteratorOf(SampleText, SampleTextTokMak))
+  import com.rgoulter.typingtutor.Sample
+  import Sample.{ SampleText, SampleDocument, SampleTextTokMak }
 
   val textArea = new RSyntaxTextArea(20, 60)
 
