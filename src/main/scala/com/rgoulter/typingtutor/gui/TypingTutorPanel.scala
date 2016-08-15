@@ -2,6 +2,8 @@ package com.rgoulter.typingtutor.gui
 
 import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.event.FocusEvent
+import java.awt.event.FocusListener
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 
@@ -21,6 +23,7 @@ import com.rgoulter.typingtutor.TypingKeyListener
 
 
 
+
 /** Manages the `TextArea` with the typing tutor. */
 class TypingTutorPanel(text: String,
                        document: Document,
@@ -37,47 +40,6 @@ class TypingTutorPanel(text: String,
   textArea.getCaret().setBlinkRate(0)
 
   textArea.setCaretPosition(0)
-
-  // TMP: Open a file.
-//  textArea.addKeyListener(new KeyListener {
-//    override def keyPressed(ke: KeyEvent): Unit = {
-//      // Ctrl-O => Open file.
-//      if (ke.isControlDown()) {
-//        ke.getKeyCode() match {
-//          case KeyEvent.VK_O => {
-//            val chooser = new JFileChooser()
-//            val retVal = chooser.showOpenDialog(frame)
-//
-//            if(retVal == JFileChooser.APPROVE_OPTION) {
-//              val selectedFile = chooser.getSelectedFile()
-//
-//              // Use the file extension to set/update the TokenMaker
-//              val origTokMak = Utils.tokenMakerForFile(selectedFile)
-//              partialTokMak = new PartialTokenMaker(origTokMak)
-//              syntaxDoc.setSyntaxStyle(partialTokMak)
-//
-//              val source = scala.io.Source.fromFile(selectedFile)
-//              val text = source.mkString
-//              source.close()
-//
-//              val tokenIterable = Utils.tokenIteratorOf(text, origTokMak)
-//              val doc = new DocumentImpl(text, tokenIterable)
-//
-//              updateText(text, doc.initialOffset)
-//
-//              textCell.send(doc)
-//            }
-//
-//            ke.consume()
-//          }
-//          case _ => ()
-//        }
-//      }
-//    }
-//
-//    override def keyReleased(ke: KeyEvent): Unit = {}
-//    override def keyTyped(ke: KeyEvent): Unit = {}
-//  })
 
   // Ignore/Suppress keys which move the cursor.
   textArea.addKeyListener(new KeyListener {
@@ -169,9 +131,32 @@ class TypingTutorPanel(text: String,
     forceRefresh()
   })
 
+  def setDocument(text: String, doc: Document, tokMak: TokenMaker): Unit = {
+    partialTokMak = new PartialTokenMaker(tokMak)
+    syntaxDoc.setSyntaxStyle(partialTokMak)
+
+    // Use the file extension to set/update the TokenMaker
+    updateText(text, doc.initialOffset)
+
+    textCell.send(doc)
+  }
+
 
   /** Stats, emitted only at the end of the game/lesson. */
   val statsStream = typeTutorKL.endGame.snapshot(typeTutorKL.stats)
+
+
+  // This probably isn't idiomatic way to do focus,
+  // see https://docs.oracle.com/javase/tutorial/uiswing/misc/focus.html
+  setFocusable(true)
+  addFocusListener(new FocusListener {
+    override def focusGained(focusEvt: FocusEvent): Unit = {
+      println("TTPanel got focus")
+      textArea.requestFocusInWindow()
+    }
+
+    override def focusLost(focusEvt: FocusEvent): Unit = {}
+  })
 
 
   val scrollPane = new RTextScrollPane(textArea)

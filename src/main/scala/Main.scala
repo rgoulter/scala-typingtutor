@@ -6,13 +6,18 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
+import com.rgoulter.typingtutor.DocumentImpl
+import com.rgoulter.typingtutor.Utils
 import com.rgoulter.typingtutor.gui._
 
 
 
 object Main {
   def main(args: Array[String]): Unit = {
-    val SelectFileCard  = "select"
+    import com.rgoulter.typingtutor.Sample
+    import Sample.{ SampleText, SampleDocument, SampleTextTokMak }
+
+    val FileSelectCard  = "select"
     val TypingTutorCard = "typing"
     val ShowStatsCard   = "stats"
 
@@ -21,19 +26,30 @@ object Main {
     cards.setLayout(cardLayout)
 
 
-    // TODO: "Select File" panel
+    // (unpack sample file(s)... + add to DB).
+    // PERSISTENCE: Get list of files which exist, (rm the files in DB which don't exist in path),
 
 
-    import com.rgoulter.typingtutor.Sample
-    import Sample.{ SampleText, SampleDocument, SampleTextTokMak }
+    val fileSelectPanel = new FileSelectionPanel()
+    cards.add(fileSelectPanel, FileSelectCard)
+
+
+    // TODO: "Settings" panel
+
+
+    // PERSISTENCE: Get initialOffset for the selected file.
+
+
+    // TODO initial typingTutorPanel to a blank document..
     val typingTutorPanel =
       new TypingTutorPanel(SampleText, SampleDocument, SampleTextTokMak)
-    val endTypingListener = typingTutorPanel.statsStream.listen(_ =>
-      // Stats emitted only at end of game/lesson.
-
-      cardLayout.show(cards, ShowStatsCard)
-    )
     cards.add(typingTutorPanel, TypingTutorCard)
+
+
+    // PERSISTENCE: Save exitOffset for the selectedFile (or 0, if at end..).
+
+    // (I don't see that it's particularly interesting to save the particular
+    //  TypedStats data).
 
 
     val statsPanel = new ShowStatsPanel(typingTutorPanel.statsStream)
@@ -47,6 +63,38 @@ object Main {
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
     frame.pack()
     frame.setLocationRelativeTo(null)
+
+
+    val fileSelectListener = fileSelectPanel.selectedFile.listen { maybeFile =>
+      val (text, doc, tokMak) = maybeFile match {
+        case Some(selectedFile) => {
+          val tokMak = Utils.tokenMakerForFile(selectedFile)
+
+          val source = scala.io.Source.fromFile(selectedFile)
+          val text = source.mkString
+          source.close()
+
+          val tokenIterable = Utils.tokenIteratorOf(text, tokMak)
+          val doc = new DocumentImpl(text, tokenIterable)
+
+          (text, doc, tokMak)
+        }
+        case None => {
+          (SampleText, SampleDocument, SampleTextTokMak)
+        }
+      }
+
+      typingTutorPanel.setDocument(text, doc, tokMak)
+
+      cardLayout.show(cards, TypingTutorCard)
+      typingTutorPanel.requestFocus()
+    }
+
+    val endTypingListener = typingTutorPanel.statsStream.listen(_ =>
+      // Stats emitted only at end of game/lesson.
+
+      cardLayout.show(cards, ShowStatsCard)
+    )
 
 
     // Start all Swing applications on the EDT.
