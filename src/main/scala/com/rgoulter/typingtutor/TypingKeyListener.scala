@@ -26,10 +26,6 @@ case class TypedCharacter(val c: Char, val time: Long) extends TypingEvent
 
 
 
-case class ResetPosition(pos: Int = 0) extends TypingEvent
-
-
-
 object State {
   /** Returns a [[State]] with the initial offset of the [[Document]],
     * and `numCorrect`/`numIncorrect` counters reset to `0`. */
@@ -64,10 +60,6 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
     * Represents events received in the [[KeyEvent]] of [[keyTyped]] calls.
     */
   private val typedEvents = new StreamSink[TypingEvent]
-  // This is deprecated, no longer needed.
-  private val typedOrReset =
-    typedEvents.merge(text.updates().map(t => ResetPosition()),
-                      (te, reset) => reset)
   // unused
   val backspaceEvents = typedEvents.filter({
     case Backspace() => true
@@ -91,9 +83,8 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
     * n.b. the [[State]] resets when the document changes.
     */
   val markers = Cell.switchC(text.map { text =>
-    typedOrReset.accum[State](State.initialStateOf(text), (te, state) => {
+    typedEvents.accum[State](State.initialStateOf(text), (te, state) => {
       te match {
-        case ResetPosition(_) => State.initialStateOf(text)
         case Backspace() => {
           state match {
             // Pressed Backspace => Go back a character.
