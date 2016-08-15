@@ -31,10 +31,8 @@ case class ResetPosition(pos: Int = 0) extends TypingEvent
 
 
 object State {
-  // Since we want to skip over leading whitespace, blank lines,
-  // comments,
-  // and it may be that programs we type begin with these,
-  // initial state shouldn't necessarily be at 0.
+  /** Returns a [[State]] with the initial offset of the [[Document]],
+    * and `numCorrect`/`numIncorrect` counters reset to `0`. */
   def initialStateOf(doc: Document): State =
     State(0, 0, doc.initialOffset)
 }
@@ -44,6 +42,14 @@ object State {
 // Position represents the latest correctly typed input.
 // Display in RSTA still adds numIncorrect for highlighting typing
 // mistakes.
+/** Represents the position of the cursor in the typing tutor,
+  * distinguishing between how many correct letters the user has entered,
+  * and what position/offset in the text document the user is at.
+  *
+  * `numIncorrect` can be used for showing the user how far it's been since
+  * they typed an incorrect letter. It does not represent how many incorrect
+  * keys the user has pressed in total.
+  */
 case class State(val numCorrect: Int,
                  val numIncorrect: Int,
                  val position : Int) {
@@ -53,15 +59,25 @@ case class State(val numCorrect: Int,
 
 // callback: (position, numIncorrect) => ()
 class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
+  /** Stream of [[Backspace]] or [[TypedCharacter]] values.
+    *
+    * Represents events received in the [[KeyEvent]] of [[keyTyped]] calls.
+    */
   private val typedEvents = new StreamSink[TypingEvent]
-  // Need to be able to reset the markers on text changing..
+  // This is deprecated, no longer needed.
   private val typedOrReset =
     typedEvents.merge(text.updates().map(t => ResetPosition()),
                       (te, reset) => reset)
+  // unused
   val backspaceEvents = typedEvents.filter({
     case Backspace() => true
     case _ => false
   })
+  /** Stream of `(character, time)` values, representing
+    *  which keys were pressed at what time.
+    *
+    * Should be private.
+    */
   val typedCharEvents = typedEvents.filter({
     case TypedCharacter(_, _) => true
     case _ => false
@@ -70,7 +86,10 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
     case _ => throw new IllegalStateException()
   })
 
-  // lastCorrect is a cell. How?
+  /** Stream of the [[State]] of the typing tutor.
+    *
+    * n.b. the [[State]] resets when the document changes.
+    */
   val markers = Cell.switchC(text.map { text =>
     typedOrReset.accum[State](State.initialStateOf(text), (te, state) => {
       te match {
@@ -124,6 +143,7 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
   })
   val numCorrect   = markers.map(_.numCorrect)
   val numIncorrect = markers.map(_.numIncorrect)
+  /** Current offset into the document. (Doesn't include `numIncorrect` in this calculation). */
   val currentPos   = markers.map(_.position)
 
   val totalTypedCt = typedEvents.accum[Int](0, (_, n) => n + 1)
@@ -135,6 +155,7 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
     Cell.lift((text: Document, idx: Int) => text.charAt(idx),
               text,
               currentPos)
+  /** Stream of `(actual char, expected char, time)` values. */
   val keyEntryEvts =
     typedCharEvents.snapshot(currentChar, { (typedCharEvt, expectedChar: Char) =>
       val (typedChar, time) = typedCharEvt
@@ -144,12 +165,12 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
     keyEntryEvts.accum(Array(), (tup, acc) => { acc :+ tup })
 
   // TODO 'Quit after typed certain number'
-  // although this needs to distinguish between 'num-typed-correct' and 'position'
   private val endGameAtEndOfText =
     Cell.lift((text: Document, currentPos: Int) => currentPos == text.size - 1,
               text,
               currentPos).value().filter(b => b)
   private val endGameSink = new StreamSink[Unit]()
+  /** Stream for when the typing tutor should finish. (e.g. user has typed in enough). */
   val endGame: Stream[Unit] =
     endGameSink.merge(endGameAtEndOfText.map(_ => ()),
                       (l, r) => l)
