@@ -8,6 +8,11 @@ import scala.collection.immutable.TreeMap
 
 
 
+/** Trivial implementation of [[Document]] given a [[String]].
+  *
+  * All characters in the given text must be typed, (including
+  * blank lines, comments).
+  */
 class SimpleDocumentImpl(text: String) extends Document {
   val size: Int = text.size
 
@@ -20,6 +25,9 @@ class SimpleDocumentImpl(text: String) extends Document {
 
 
 
+/** Implementation of [[Document]] which skips over e.g. comments, blank lines,
+  * etc. using the given `Iterable[Token]`.
+  */
 class DocumentImpl(text: String, tokens: Iterable[Token]) extends Document {
   val size: Int = text.size
 
@@ -30,11 +38,9 @@ class DocumentImpl(text: String, tokens: Iterable[Token]) extends Document {
     // - skip trailing spaces (aside from '\n').
     // - skip blank lines
 
-    def isSkippable(tok: Token): Boolean = {
-      tok.isCommentOrWhitespace() ||
-      tok.getType() == TokenTypes.NULL
-    }
-
+    // Assuming `tok1` occurs before `tok2` in `tokens`,
+    // select the earliest token for Newline,
+    // or the earliest token otherwise.
     def dominantSkippableTok(tok1: Token, tok2: Token): Token = {
       if (tok1.getType() == TokenTypes.NULL) {
         tok1
@@ -45,9 +51,9 @@ class DocumentImpl(text: String, tokens: Iterable[Token]) extends Document {
       }
     }
 
-    // The logic here is a bit convoluted,
-    // but essentially only add the "dominant" skippable token between
-    // non-skippable tokens.
+    // Reduce tokens down to simplifiedTokens such that at most one
+    // whitespace/newline Token occurs between other Tokens.
+    // (Tokens for comments are omitted entirely).
     val init : (Seq[Token], Option[Token]) = (Seq(), None)
     val (simplifiedTokens,_) = tokens.foldRight(init) ({ (tok, tup) =>
       val (res, skippableTok) = tup
@@ -75,12 +81,13 @@ class DocumentImpl(text: String, tokens: Iterable[Token]) extends Document {
 
     simplifiedTokens.foldLeft(new TreeMap[Int,Char]()) { (map, tok) =>
       if (tok.getType() == TokenTypes.NULL) {
-        // This isn't quite right; the 'expected char' will be the character at
-        // `bitset.last + 1`, whereas we want the expectedChar to be '\n'.
+        // Token is Newline; expect user to type in '\n'.
+        // Offset `map.last._1 + 1` deviates from `tok.getOffset()` in case
+        // where document line has trailing spaces/comment.
         val nextTup = ((map.last._1 + 1), '\n')
         map + nextTup
       } else if (tok.isWhitespace()) {
-        // Limit whitespace characters we expect to just 1.
+        // Limit whitespace characters we expect to just 1 char.
         val tokRange = Range(tok.getOffset(), tok.getOffset() + 1)
         map ++ tokRange.zip(tokRange.map(text.charAt))
       } else {
