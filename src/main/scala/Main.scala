@@ -6,6 +6,9 @@ import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
+import sodium.Cell
+import sodium.Stream
+
 import com.rgoulter.typingtutor.DocumentImpl
 import com.rgoulter.typingtutor.Utils
 import com.rgoulter.typingtutor.gui._
@@ -92,7 +95,25 @@ object Main {
       typingTutorPanel.requestFocus()
     }
 
-    // PERSISTENCE: Save exitOffset for the selectedFile (or 0, if at end..).
+
+    // Save exitOffset for the selectedFile
+    val currentFile = fileSelectPanel.selectedFile.hold(None)
+    val updateOffsetListener =
+      Stream.filterOption(typingTutorPanel.finishingOffset
+                                          .snapshot(currentFile,
+                                                    { (offset: Int,
+                                                       currFile: Option[File]) =>
+        currFile match {
+          case Some(file) => Some((file, offset))
+          case None => None
+        }
+      })).listen({ case (file: File, newOffset: Int) =>
+        // Paths for fileProgress need to be relative to SourceFilesDir.
+        val relPath = SourceFilesDir.toPath().relativize(file.toPath())
+        fileProgress.updateEntry(relPath, newOffset)
+      })
+
+
     val endTypingListener = typingTutorPanel.statsStream.listen(_ =>
       // Stats emitted only at end of game/lesson.
 

@@ -62,7 +62,7 @@ abstract class FileProgress {
 
   def entries: List[FileProgressEntry]
 
-  def updateEntry(entry: FileProgressEntry, newOffset: Int): Unit
+  def updateEntry(path: Path, newOffset: Int): Unit
 
   def removeEntry(path: Path): Unit
 

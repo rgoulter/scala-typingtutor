@@ -90,8 +90,7 @@ class RawFileProgressDB(connection: Connection) {
     res
   }
 
-  def updateEntry(entry: Entry, newOffset: Int): Unit = {
-    val (path, offset) = entry
+  def updateEntry(path: String, newOffset: Int): Unit = {
     val Sql = s"UPDATE $TableName SET $OffsetColumn = $newOffset WHERE $FileColumn = '$path'"
 
     statement.executeUpdate(Sql)
@@ -144,8 +143,8 @@ class FileProgressDB(connection: Connection) extends FileProgress {
     rawDB.entries.map(fpEntryFromEntry)
   }
 
-  override def updateEntry(entry: FileProgressEntry, newOffset: Int): Unit = {
-    rawDB.updateEntry(entryFromFpEntry(entry), newOffset)
+  override def updateEntry(path: Path, newOffset: Int): Unit = {
+    rawDB.updateEntry(path.toString(), newOffset)
   }
 
   override def removeEntry(path: Path): Unit = {

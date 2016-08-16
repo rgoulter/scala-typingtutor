@@ -145,6 +145,9 @@ class TypingTutorPanel(text: String,
   /** Stats, emitted only at the end of the game/lesson. */
   val statsStream = typeTutorKL.endGame.snapshot(typeTutorKL.stats)
 
+  /** The offset when endgame is emitted. */
+  val finishingOffset = typeTutorKL.endGame.snapshot(typeTutorKL.currentPos)
+
 
   // This probably isn't idiomatic way to do focus,
   // see https://docs.oracle.com/javase/tutorial/uiswing/misc/focus.html
