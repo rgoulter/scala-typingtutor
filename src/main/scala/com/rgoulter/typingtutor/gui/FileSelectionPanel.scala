@@ -29,33 +29,40 @@ import org.apache.commons.io.FileUtils
 import sodium.Stream
 import sodium.StreamSink
 
+import com.rgoulter.typingtutor.FileProgress
 import com.rgoulter.typingtutor.FileProgressEntry
 
 
 
-class FileSelectionPanel(sourceFilesDir: File) extends JPanel {
+class FileSelectionPanel(sourceFilesDir: File, fileProgress: FileProgress) extends JPanel {
   // List the existing files from sourceFilesDir.
-  val typingFiles =
+  private val typingFiles =
     FileUtils.iterateFiles(sourceFilesDir, null, true).asScala.toList
 
-  val typingFileEntries = typingFiles.map({ f =>
-    val progressOfFile = 0
-    new FileProgressEntry(f.toPath(), progressOfFile)
-  })
+  private val relPaths =
+    typingFiles.map(f =>
+      sourceFilesDir.toPath().relativize(f.toPath()))
 
+  // n.b. fileProgress's Paths need to be relative to sourceFilesDir
+  fileProgress.updateEntries(relPaths)
 
-  // PERSISTENCE: Get list of files which exist, (rm the files in DB which don't exist in path),
+  private val typingFileEntries = fileProgress.entries
 
 
   private val tableModel = new AbstractTableModel() {
     // Columns: Path, Language
-    override def getColumnCount(): Int = 2
+    override def getColumnCount(): Int = 3
 
     override def getColumnName(col: Int): String =
       col match {
         case 0 => "Filename"
         case 1 => "Language"
+        case 2 => "Offset"
       }
+
+    override def getColumnClass(c: Int): Class[_] = {
+        getValueAt(0, c).getClass()
+    }
 
     override def getRowCount(): Int =
       typingFileEntries.length
@@ -64,12 +71,14 @@ class FileSelectionPanel(sourceFilesDir: File) extends JPanel {
       val fileEntry = typingFileEntries(row)
       col match {
         case 0 => {
-          val relPath = sourceFilesDir.toPath().relativize(fileEntry.path)
-          relPath.toString()
+          fileEntry.path
         }
 
         case 1 =>
           fileEntry.language
+
+        case 2 =>
+          fileEntry.offset.asInstanceOf[Integer]
       }
     }
   }
@@ -136,7 +145,9 @@ class FileSelectionPanel(sourceFilesDir: File) extends JPanel {
       if (selectedRow >= 0) {
         val selectedModelIdx = table.convertRowIndexToModel(selectedRow)
         val fileEntry = typingFileEntries(selectedModelIdx)
-        val selectedFile = fileEntry.path.toFile()
+
+        val relPath = fileEntry.path
+        val selectedFile = sourceFilesDir.toPath().resolve(relPath).toFile()
 
         selectedFileSink.send(Some(selectedFile))
       }
@@ -153,7 +164,16 @@ class FileSelectionPanel(sourceFilesDir: File) extends JPanel {
       if(retVal == JFileChooser.APPROVE_OPTION) {
         val selectedFile = chooser.getSelectedFile()
 
-        selectedFileSink.send(Some(selectedFile))
+        // Copy to sourceFilesDir,
+        val destFile = new File(sourceFilesDir, selectedFile.getName())
+        FileUtils.copyFile(selectedFile, destFile)
+
+        val relPathToFile = sourceFilesDir.toPath().relativize(destFile.toPath())
+
+        // Add to peristence / file progress.
+        fileProgress.addEntry(new FileProgressEntry(relPathToFile, 0))
+
+        selectedFileSink.send(Some(destFile))
       }
     }
   })

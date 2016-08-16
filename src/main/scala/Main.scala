@@ -9,6 +9,8 @@ import javax.swing.SwingUtilities
 import com.rgoulter.typingtutor.DocumentImpl
 import com.rgoulter.typingtutor.Utils
 import com.rgoulter.typingtutor.gui._
+import com.rgoulter.typingtutor.sql.FileProgressDB
+import com.rgoulter.typingtutor.sql.SQLHelper
 
 
 
@@ -24,6 +26,11 @@ object Main {
     Sample.unpackIntoDir(SourceFilesDir)
 
 
+    val DBName = "typingtutor.db"
+    val dbConn = SQLHelper.connectionFor(DBName)
+    val fileProgress = new FileProgressDB(dbConn)
+
+
     val FileSelectCard  = "select"
     val TypingTutorCard = "typing"
     val ShowStatsCard   = "stats"
@@ -33,7 +40,7 @@ object Main {
     cards.setLayout(cardLayout)
 
 
-    val fileSelectPanel = new FileSelectionPanel(SourceFilesDir)
+    val fileSelectPanel = new FileSelectionPanel(SourceFilesDir, fileProgress)
     cards.add(fileSelectPanel, FileSelectCard)
 
 

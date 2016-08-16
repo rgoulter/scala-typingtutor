@@ -75,7 +75,7 @@ class RawFileProgressDB(connection: Connection) {
   }
 
   def entries: List[Entry] = {
-    val QuerySql = s"SELECT ($FileColumn, $OffsetColumn) FROM $TableName"
+    val QuerySql = s"SELECT $FileColumn, $OffsetColumn FROM $TableName"
     val resultSet = statement.executeQuery(QuerySql)
 
     var res = List[Entry]()

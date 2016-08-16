@@ -10,3 +10,5 @@ bin/
 // Default dir for where we store our application dir,
 // in $CWD/typingtutor
 typingtutor/
+typingtutor.db
+
