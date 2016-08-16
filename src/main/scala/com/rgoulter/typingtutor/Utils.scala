@@ -1,15 +1,13 @@
 package com.rgoulter.typingtutor
 
 import java.io.File
-
 import javax.swing.text.Segment
-
 import org.apache.commons.io.FilenameUtils
-
 import org.fife.ui.rsyntaxtextarea.Token
 import org.fife.ui.rsyntaxtextarea.TokenImpl
 import org.fife.ui.rsyntaxtextarea.TokenMaker
 import org.fife.ui.rsyntaxtextarea.TokenTypes
+import scala.collection.immutable.HashMap
 
 
 
@@ -62,59 +60,77 @@ object Utils {
     })
   }
 
-  def tokenMakerForFile(f: File): TokenMaker = {
-    import org.fife.ui.rsyntaxtextarea.modes._
 
+
+  import org.fife.ui.rsyntaxtextarea.modes._
+
+  // Not all the filetypes RSyntaxTextArea supports
+  // are here; some extensions missing.
+  //  * x86 asm?
+  //  * bbcode??
+  //  * delphi?
+  //  * dockerfile?
+  //  * fortran?
+  //  * ....
+  //  * lisp??
+  type Language = (String, String, TokenMaker)
+  val Languages =
+    Seq(
+      ("actionscript", "as", new ActionScriptTokenMaker()),
+      ("c",            "c", new CTokenMaker()),
+      ("clojure",      "clj", new ClojureTokenMaker()),
+      ("cplusplus",    "cpp", new CPlusPlusTokenMaker()),
+      ("csharp",       "cs", new CSharpTokenMaker()),
+      ("css",          "css", new CSSTokenMaker()),
+      ("d",            "d", new DTokenMaker()),
+      ("dart",         "dart", new DartTokenMaker()),
+      ("dtd",          "dtd", new DtdTokenMaker()),
+      ("groovy",       "groovy", new GroovyTokenMaker()),
+      ("html",         "html", new HTMLTokenMaker()),
+      ("java",         "java", new JavaTokenMaker()),
+      ("javascript",   "js", new JavaScriptTokenMaker()),
+      ("json",         "json", new JsonTokenMaker()),
+      ("jsp",          "jsp", new JSPTokenMaker()),
+      ("latex",        "tex", new LatexTokenMaker()),
+      ("less",         "less", new LessTokenMaker()),
+      ("lua",          "lua", new LuaTokenMaker()),
+      ("makefile",     "mk", new MakefileTokenMaker()),
+      ("perl",         "pl", new PerlTokenMaker()),
+      ("plaintext",    "txt", new PlainTextTokenMaker()),
+      ("php",          "php", new PHPTokenMaker()),
+      ("python",       "py", new PythonTokenMaker()),
+      ("ruby",         "rb", new RubyTokenMaker()),
+      ("sas",          "sas", new SASTokenMaker()), // ???
+      ("scala",        "scala", new ScalaTokenMaker()),
+      ("sql",          "sql", new SQLTokenMaker()),
+      ("tcl",          "tcl", new TclTokenMaker()),
+//      ("typescript", "ts", new TypeScriptTokenMaker()) // not in current ver of RSTA?
+      ("unixshell",    "sh", new UnixShellTokenMaker()),
+      ("visualbasic",  "vb", new VisualBasicTokenMaker()),
+      ("windowsbatch", "bat", new WindowsBatchTokenMaker()),
+      ("xml",          "xml", new XMLTokenMaker())
+  )
+
+  val LanguageLookupByExtension =
+    Languages.foldLeft(HashMap.empty[String, Language])({ (hm, lang) =>
+      val (_, ext, _) = lang
+      hm + (ext -> lang)
+    })
+
+  def languageForFile(f: File): Language = {
     // Special cases
     if (f.getName() == "makefile") {
-      return new MakefileTokenMaker()
+      return ("makefile", "mk", new MakefileTokenMaker())
     }
 
     val ext = FilenameUtils.getExtension(f.getName())
 
-    // Not all the filetypes RSyntaxTextArea supports
-    // are here; some extensions missing.
-//       * x86 asm?
-//       * bbcode??
-//       * delphi?
-//       * dockerfile?
-//       * fortran?
-//       * ....
-//       * lisp??
-    ext match {
-      case "as"     => new ActionScriptTokenMaker()
-      case "c"      => new CTokenMaker()
-      case "clj"    => new ClojureTokenMaker()
-      case "cpp"    => new CPlusPlusTokenMaker()
-      case "cs"     => new CSharpTokenMaker()
-      case "css"    => new CSSTokenMaker()
-      case "d"      => new DTokenMaker()
-      case "dart"   => new DartTokenMaker()
-      case "dtd"    => new DtdTokenMaker()
-      case "groovy" => new GroovyTokenMaker()
-      case "html"   => new HTMLTokenMaker()
-      case "java"   => new JavaTokenMaker()
-      case "js"     => new JavaScriptTokenMaker()
-      case "json"   => new JsonTokenMaker()
-      case "jsp"    => new JSPTokenMaker()
-      case "tex"    => new LatexTokenMaker()
-      case "less"   => new LessTokenMaker()
-      case "lua"    => new LuaTokenMaker()
-      case "mk"     => new MakefileTokenMaker()
-      case "pl"     => new PerlTokenMaker()
-      case "php"    => new PHPTokenMaker()
-      case "py"     => new PythonTokenMaker()
-      case "rb"     => new RubyTokenMaker()
-      case "sas"    => new SASTokenMaker() // ???
-      case "scala"  => new ScalaTokenMaker()
-      case "sql"    => new SQLTokenMaker()
-      case "tcl"    => new TclTokenMaker()
-//      case "ts"     => new TypeScriptTokenMaker()
-      case "sh"     => new UnixShellTokenMaker()
-      case "vb"     => new VisualBasicTokenMaker()
-      case "bat"    => new WindowsBatchTokenMaker()
-      case "xml"    => new XMLTokenMaker()
-      case _ => new PlainTextTokenMaker()
-    }
+    LanguageLookupByExtension.getOrElse(ext,
+                                        ("plaintext", "txt", new PlainTextTokenMaker()))
+  }
+
+  def tokenMakerForFile(f: File): TokenMaker = {
+    val (_,_,tokenMaker) = languageForFile(f)
+    tokenMaker
   }
 }
