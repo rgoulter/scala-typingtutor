@@ -19,9 +19,6 @@ abstract class Document {
   def charAt(offset: Int): Char =
     expectedChars(offset)
 
-  /** Length of the document. */
-  val size: Int;
-
   /** Map of which characters are expected at which offsets.
     *
     * It is expected that `charAt(offset)` is the same as `expectedChars(offset)`. */
@@ -36,6 +33,9 @@ abstract class Document {
 
   /** The earliest offset which the typing tutor should expect user to type. */
   lazy val initialOffset: Int = typeableOffsets.head
+
+  /** Length of the document. */
+  lazy val size: Int = typeableOffsets.last;
 
   /** The latest offset before the given offset, if one exists. */
   def previousTypeableOffset(offset: Int): Option[Int] =

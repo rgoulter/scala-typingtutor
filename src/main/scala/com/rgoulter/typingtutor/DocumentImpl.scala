@@ -14,8 +14,6 @@ import scala.collection.immutable.TreeMap
   * blank lines, comments).
   */
 class SimpleDocumentImpl(text: String) extends Document {
-  val size: Int = text.size
-
   val expectedChars: TreeMap[Int, Char] = {
     // whole range is typeable.
     val pairs = Range(0, size).toList.zip(text)
@@ -29,8 +27,6 @@ class SimpleDocumentImpl(text: String) extends Document {
   * etc. using the given `Iterable[Token]`.
   */
 class DocumentImpl(text: String, tokens: Iterable[Token]) extends Document {
-  val size: Int = text.size
-
   val expectedChars: TreeMap[Int, Char] = {
     // Ideally, we:
     // - skip comments, (incl. trailing)
