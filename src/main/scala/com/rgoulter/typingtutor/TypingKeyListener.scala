@@ -111,6 +111,13 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
                 val newNumCorrect = Math.min(numCorrect + 1, text.size)
                 val newPosition =
                   text.nextTypeableOffset(position).getOrElse(position)
+
+                // If the position didn't advance,
+                // must be at the end.
+                if (position == newPosition) {
+                  endGameSink.send(position + 1)
+                }
+
                 State(newNumCorrect, 0, newPosition)
               } else {
                 // Mis-typed character.
@@ -168,17 +175,12 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
 
 
   // TODO 'Quit after typed certain number'
-  private val endGameAtEndOfText =
-    Cell.lift((text: Document, currentPos: Int) => currentPos == text.size - 1,
-              text,
-              currentPos).value().filter(b => b)
 
-  private val endGameSink = new StreamSink[Unit]()
+  private val endGameSink = new StreamSink[Int]()
 
   /** Stream for when the typing tutor should finish. (e.g. user has typed in enough). */
-  val endGame: Stream[Unit] =
-    endGameSink.merge(endGameAtEndOfText.map(_ => ()),
-                      (l, r) => l)
+  val endGame: Stream[Int] =
+    endGameSink
 
 
 
@@ -201,7 +203,7 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
 
     pressedChar match {
       case KeyEvent.VK_ESCAPE => {
-        endGameSink.send(())
+        endGameSink.send(currentPos.sample())
       }
 
       case '\b' => {
