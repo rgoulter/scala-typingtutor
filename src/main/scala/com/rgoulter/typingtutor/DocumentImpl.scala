@@ -26,7 +26,9 @@ class SimpleDocumentImpl(text: String) extends Document {
 /** Implementation of [[Document]] which skips over e.g. comments, blank lines,
   * etc. using the given `Iterable[Token]`.
   */
-class DocumentImpl(text: String, tokens: Iterable[Token]) extends Document {
+class DocumentImpl(text: String,
+                   tokens: Iterable[Token],
+                   initOffs: Int = 0) extends Document {
   val expectedChars: TreeMap[Int, Char] = {
     // Ideally, we:
     // - skip comments, (incl. trailing)
@@ -90,6 +92,16 @@ class DocumentImpl(text: String, tokens: Iterable[Token]) extends Document {
         val tokRange = Range(tok.getOffset(), tok.getEndOffset())
         map ++ tokRange.zip(tokRange.map(text.charAt))
       }
+    }
+  }
+
+  override lazy val initialOffset = {
+    val fromGivenInitOffs = typeableOffsets.from(initOffs)
+
+    if (fromGivenInitOffs.isEmpty) {
+      typeableOffsets.head
+    } else {
+      fromGivenInitOffs.head
     }
   }
 }

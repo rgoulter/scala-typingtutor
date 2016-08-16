@@ -70,7 +70,6 @@ object Main {
 
 
     val fileSelectListener = fileSelectPanel.selectedFile.listen { maybeFile =>
-      // PERSISTENCE: Get initialOffset for the selected file.
       val (text, doc, tokMak) = maybeFile match {
         case Some(selectedFile) => {
           val tokMak = Utils.tokenMakerForFile(selectedFile)
@@ -79,8 +78,11 @@ object Main {
           val text = source.mkString
           source.close()
 
+          val relPath = SourceFilesDir.toPath().relativize(selectedFile.toPath())
+          val initOffs = fileProgress.offsetOf(relPath).getOrElse(0)
+
           val tokenIterable = Utils.tokenIteratorOf(text, tokMak)
-          val doc = new DocumentImpl(text, tokenIterable)
+          val doc = new DocumentImpl(text, tokenIterable, initOffs)
 
           (text, doc, tokMak)
         }
