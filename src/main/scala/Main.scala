@@ -16,14 +16,12 @@ object Main {
   def main(args: Array[String]): Unit = {
     import com.rgoulter.typingtutor.Sample
     import Sample.{ SampleText, SampleDocument, SampleTextTokMak }
-//
-    // (unpack sample file(s)... + add to DB).
+
+    // Unpack sample file(s).
     val ApplicationDir = new File(".")
     val SourceFilesDir = new File(ApplicationDir, "typingtutor")
     SourceFilesDir.mkdirs()
     Sample.unpackIntoDir(SourceFilesDir)
-
-    // PERSISTENCE: Get list of files which exist, (rm the files in DB which don't exist in path),
 
 
     val FileSelectCard  = "select"
@@ -35,7 +33,7 @@ object Main {
     cards.setLayout(cardLayout)
 
 
-    val fileSelectPanel = new FileSelectionPanel()
+    val fileSelectPanel = new FileSelectionPanel(SourceFilesDir)
     cards.add(fileSelectPanel, FileSelectCard)
 
 

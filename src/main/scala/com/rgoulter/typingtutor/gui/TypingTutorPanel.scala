@@ -151,7 +151,6 @@ class TypingTutorPanel(text: String,
   setFocusable(true)
   addFocusListener(new FocusListener {
     override def focusGained(focusEvt: FocusEvent): Unit = {
-      println("TTPanel got focus")
       textArea.requestFocusInWindow()
     }
 
