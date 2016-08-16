@@ -6,15 +6,19 @@ import org.fife.ui.rsyntaxtextarea.modes.JavaTokenMaker
   * before they can try using the typing tutor.
   */
 object Sample {
-  val SampleText = """public class HelloWorld {
-  // This is a class
+  // Eclipse building is a bit awkward if just `Hello.java`
+  val SampleFiles = Seq("sample/Hello.java.sample")
 
-  public static void main(String args[]) {
-    int x; // trailing comment
+  val SampleTexts = SampleFiles.map({ sampleURL =>
+    val url = Sample.getClass().getClassLoader().getResource(sampleURL)
+    val source = scala.io.Source.fromURL(url)
+    val text = source.mkString
+    source.close()
 
-    println("Hello World!");
-  }
-}"""
+    (sampleURL -> text)
+  }).toMap
+
+  val SampleText = SampleTexts("sample/Hello.java.sample")
 
   val SampleTextTokMak = new JavaTokenMaker()
 

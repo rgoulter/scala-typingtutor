@@ -1,0 +1,10 @@
+public class Hello {
+  // This is a class
+
+  public static void main(String args[]) {
+    int x; // trailing comment
+
+    System.out.println("Hello World!");
+  }
+}
+
