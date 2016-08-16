@@ -16,9 +16,11 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTable
+import javax.swing.JTextField
 import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 import javax.swing.table.AbstractTableModel
+import javax.swing.table.DefaultTableCellRenderer
 
 import scala.collection.JavaConverters.asScalaIteratorConverter
 
@@ -85,13 +87,25 @@ class FileSelectionPanel(sourceFilesDir: File) extends JPanel {
 
 
   private val table = new JTable(tableModel)
+
   table.setCellSelectionEnabled(false)
   table.setRowSelectionAllowed(true)
   table.setRowSelectionInterval(0, 0)
-  // TODO: Well, what we want next is:
-  // XXX Adjust the widths of the columns,
-  // XXX Make so table is *sortable* by the columns, ...
-  // XXX Center the Language?
+
+  // Adjust the widths of the columns.
+  val tableColumnModel = table.getColumnModel()
+  tableColumnModel.getColumn(0).setPreferredWidth(500)
+  tableColumnModel.getColumn(1).setPreferredWidth(100)
+
+  // Enable sorting rows of the table
+  table.setAutoCreateRowSorter(true)
+
+  // Center the "Language" column
+  val centerRenderer = new DefaultTableCellRenderer()
+  centerRenderer.setHorizontalAlignment(SwingConstants.CENTER)
+  table.getColumnModel().getColumn(1).setCellRenderer(centerRenderer)
+
+
   private val scrollPane = new JScrollPane(table)
   add(scrollPane, BorderLayout.CENTER)
 
