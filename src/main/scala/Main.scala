@@ -16,6 +16,15 @@ object Main {
   def main(args: Array[String]): Unit = {
     import com.rgoulter.typingtutor.Sample
     import Sample.{ SampleText, SampleDocument, SampleTextTokMak }
+//
+    // (unpack sample file(s)... + add to DB).
+    val ApplicationDir = new File(".")
+    val SourceFilesDir = new File(ApplicationDir, "typingtutor")
+    SourceFilesDir.mkdirs()
+    Sample.unpackIntoDir(SourceFilesDir)
+
+    // PERSISTENCE: Get list of files which exist, (rm the files in DB which don't exist in path),
+
 
     val FileSelectCard  = "select"
     val TypingTutorCard = "typing"
@@ -26,10 +35,6 @@ object Main {
     cards.setLayout(cardLayout)
 
 
-    // (unpack sample file(s)... + add to DB).
-    // PERSISTENCE: Get list of files which exist, (rm the files in DB which don't exist in path),
-
-
     val fileSelectPanel = new FileSelectionPanel()
     cards.add(fileSelectPanel, FileSelectCard)
 
@@ -37,19 +42,10 @@ object Main {
     // TODO: "Settings" panel
 
 
-    // PERSISTENCE: Get initialOffset for the selected file.
-
-
     // TODO initial typingTutorPanel to a blank document..
     val typingTutorPanel =
       new TypingTutorPanel(SampleText, SampleDocument, SampleTextTokMak)
     cards.add(typingTutorPanel, TypingTutorCard)
-
-
-    // PERSISTENCE: Save exitOffset for the selectedFile (or 0, if at end..).
-
-    // (I don't see that it's particularly interesting to save the particular
-    //  TypedStats data).
 
 
     val statsPanel = new ShowStatsPanel(typingTutorPanel.statsStream)
@@ -66,6 +62,7 @@ object Main {
 
 
     val fileSelectListener = fileSelectPanel.selectedFile.listen { maybeFile =>
+      // PERSISTENCE: Get initialOffset for the selected file.
       val (text, doc, tokMak) = maybeFile match {
         case Some(selectedFile) => {
           val tokMak = Utils.tokenMakerForFile(selectedFile)
@@ -90,6 +87,7 @@ object Main {
       typingTutorPanel.requestFocus()
     }
 
+    // PERSISTENCE: Save exitOffset for the selectedFile (or 0, if at end..).
     val endTypingListener = typingTutorPanel.statsStream.listen(_ =>
       // Stats emitted only at end of game/lesson.
 
