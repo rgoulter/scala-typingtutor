@@ -4,8 +4,8 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
+import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.awt.event.KeyListener
 
 import javax.swing.JPanel
 
@@ -16,9 +16,11 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxDocument
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 
 import sodium.CellSink
+import sodium.StreamSink
 
 import com.rgoulter.typingtutor.Document
 import com.rgoulter.typingtutor.PartialTokenMaker
+import com.rgoulter.typingtutor.StreamOfKeyListener
 import com.rgoulter.typingtutor.TypingKeyListener
 
 
@@ -42,7 +44,7 @@ class TypingTutorPanel(text: String,
   textArea.setCaretPosition(0)
 
   // Ignore/Suppress keys which move the cursor.
-  textArea.addKeyListener(new KeyListener {
+  textArea.addKeyListener(new KeyAdapter {
     override def keyPressed(ke: KeyEvent): Unit = {
       ke.getKeyCode() match {
         case KeyEvent.VK_LEFT  => ke.consume()
@@ -56,9 +58,17 @@ class TypingTutorPanel(text: String,
         case _ => ()
       }
     }
+  })
 
-    override def keyReleased(ke: KeyEvent): Unit = {}
-    override def keyTyped(ke: KeyEvent): Unit = {}
+  textArea.addKeyListener(new KeyAdapter {
+    override def keyPressed(ke: KeyEvent): Unit = {
+      ke.getKeyCode() match {
+        case KeyEvent.VK_ESCAPE  => {
+          pressedEscSink.send(())
+        }
+        case _ => ()
+      }
+    }
   })
 
 
@@ -99,11 +109,12 @@ class TypingTutorPanel(text: String,
 
 
   private val textCell = new CellSink[Document](document)
-  val typeTutorKL = new TypingKeyListener(textCell)
+  private val typedEventsKL = new StreamOfKeyListener()
+  val typeTutorKL = new TypingKeyListener(textCell, typedEventsKL.typedEvents)
 
   // n.b. important that this TypingKeyListener gets added after the other KeyListeners,
   // which intercept keystrokes which need to be ignored.
-  textArea.addKeyListener(typeTutorKL)
+  textArea.addKeyListener(typedEventsKL)
 
   // n.b. it's important that a reference to this `listener` is retained,
   // or else the listener's callback won't be executed.
@@ -142,11 +153,15 @@ class TypingTutorPanel(text: String,
   }
 
 
-  /** Stats, emitted only at the end of the game/lesson. */
-  val statsStream = typeTutorKL.endGame.snapshot(typeTutorKL.stats)
+  private val pressedEscSink = new StreamSink[Unit]()
 
   /** The offset when endgame is emitted. */
-  val finishingOffset = typeTutorKL.endGame
+  val finishingOffset =
+    typeTutorKL.reachedEnd.merge(pressedEscSink.snapshot(typeTutorKL.currentPos),
+                                 { (l, r) => l })
+
+  /** Stats, emitted only at the end of the game/lesson. */
+  val statsStream = finishingOffset.snapshot(typeTutorKL.stats)
 
 
   // This probably isn't idiomatic way to do focus,

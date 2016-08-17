@@ -1,7 +1,7 @@
 package com.rgoulter.typingtutor
 
+import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.awt.event.KeyListener
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 import org.fife.ui.rsyntaxtextarea.Token
@@ -53,13 +53,39 @@ case class State(val numCorrect: Int,
 
 
 
+class StreamOfKeyListener extends KeyAdapter {
+  private val typedEventsSink = new StreamSink[TypingEvent]
+  val typedEvents: Stream[TypingEvent] = typedEventsSink
+
+  override def keyTyped(ke: KeyEvent): Unit = {
+    val pressedChar = ke.getKeyChar
+
+    pressedChar match {
+      case '\b' => {
+        typedEventsSink.send(Backspace())
+      }
+
+      // newlines.. are considered as just 'incorrect' characters.
+      case c if !ke.isControlDown() => { // what about characters like 'Home'?
+        val time = System.currentTimeMillis()
+        typedEventsSink.send(TypedCharacter(c, time))
+
+        // The '}' still inserts a character, even if `editable` is false!
+        ke.consume()
+      }
+      case _ => {}
+    }
+  }
+}
+
+
+
 // callback: (position, numIncorrect) => ()
-class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
-  /** Stream of [[Backspace]] or [[TypedCharacter]] values.
-    *
-    * Represents events received in the [[KeyEvent]] of [[keyTyped]] calls.
-    */
-  private val typedEvents = new StreamSink[TypingEvent]
+class TypingKeyListener(val text: Cell[Document], typedEvents: Stream[TypingEvent]) {
+//  /** Stream of [[Backspace]] or [[TypedCharacter]] values.
+//    *
+//    * Represents events received in the [[KeyEvent]] of [[keyTyped]] calls.
+//    */
 
   /** Stream of `(character, time)` values, representing
     *  which keys were pressed at what time.
@@ -115,7 +141,7 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
                 // If the position didn't advance,
                 // must be at the end.
                 if (position == newPosition) {
-                  endGameSink.send(position + 1)
+                  reachedEndSink.send(position + 1)
                 }
 
                 State(newNumCorrect, 0, newPosition)
@@ -174,13 +200,11 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
 
 
 
-  // TODO 'Quit after typed certain number'
-
-  private val endGameSink = new StreamSink[Int]()
+  private val reachedEndSink = new StreamSink[Int]()
 
   /** Stream for when the typing tutor should finish. (e.g. user has typed in enough). */
-  val endGame: Stream[Int] =
-    endGameSink
+  val reachedEnd: Stream[Int] =
+    reachedEndSink
 
 
 
@@ -191,34 +215,4 @@ class TypingKeyListener(val text: Cell[Document]) extends KeyListener {
               numCorrect,
               totalTypedIncorrectCt,
               keyEntries)
-
-
-
-  override def keyPressed(ke: KeyEvent): Unit = {}
-
-  override def keyReleased(ke: KeyEvent): Unit = {}
-
-  override def keyTyped(ke: KeyEvent): Unit = {
-    val pressedChar = ke.getKeyChar
-
-    pressedChar match {
-      case KeyEvent.VK_ESCAPE => {
-        endGameSink.send(currentPos.sample())
-      }
-
-      case '\b' => {
-        typedEvents.send(Backspace())
-      }
-
-      // newlines.. are considered as just 'incorrect' characters.
-      case c if !ke.isControlDown() => { // what about characters like 'Home'?
-        val time = System.currentTimeMillis()
-        typedEvents.send(TypedCharacter(c, time))
-
-        // The '}' still inserts a character, even if `editable` is false!
-        ke.consume()
-      }
-      case _ => {}
-    }
-  }
 }
