@@ -1,10 +1,17 @@
-Feature: Multiplication
-  In order to avoid making mistakes
-  As a dummy
-  I want to multiply numbers
+Feature: Typing Tutor
+  A typing tutor let's me practice typing documents.
 
-  Scenario: Multiply two variables
-    Given a variable x with value 2
-    And a variable y with value 3
-    When I multiply x * y
-    Then I get 6
+  Part of the expected behaviour here depends on the scheme
+  we use for dealing with incorrect input.
+
+  Scenario: Correctly type in shown document
+    Given a document to practice typing on
+    When I type in the correct keys
+    Then the cursor should advance
+    And the user interface should reflect this
+
+  Scenario: Incorrectly type in shown document
+    Given a document to practice typing on
+    When I type in several incorrect keys
+    Then the cursor should indicate an error
+    And the user interface should reflect this
