@@ -14,6 +14,7 @@ libraryDependencies += "org.apache.directory.studio" % "org.apache.commons.io" %
 
 libraryDependencies += "sodium" % "sodium_2.11" % "1.0" withSources() withJavadoc()
 
+libraryDependencies += "org.xerial" % "sqlite-jdbc" % "3.8.11.2"
 
 libraryDependencies ++= Seq (
         "info.cukes" % "cucumber-core" % "1.2.4" % "test",
@@ -31,3 +32,4 @@ def afterAll() : Unit = { println("** goodbye **") }
 
 CucumberPlugin.beforeAll := beforeAll
 CucumberPlugin.afterAll := afterAll
+

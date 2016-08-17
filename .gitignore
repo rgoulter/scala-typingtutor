@@ -4,7 +4,18 @@
 project/
 target/
 
-# Cucumber Things
+
+// Cucumber Things
 cucumber-html/
 cucumber-junit-report.xml
 cucumber.json
+
+// Our sample/ resources get stored here
+bin/
+
+// Default dir for where we store our application dir,
+// in $CWD/typingtutor
+typingtutor/
+typingtutor.db
+
+>>>>>>> master

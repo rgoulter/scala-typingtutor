@@ -19,7 +19,9 @@ object PartialTokenMaker {
   val UNTYPED_TOKEN = TokenTypes.DEFAULT_NUM_TOKEN_TYPES + 0;
   val UntypedStyle = new Style(Color.gray)
 
-  // Adds `UNTYPED_TOKEN` style to the text area
+  /** Adds `UntypedStyle` to the [[SyntaxScheme]] of the given
+    * [[RSyntaxTextArea]].
+    */
   def augmentStyleOfTextArea(textArea: RSyntaxTextArea): Unit = {
     val scheme = textArea.getSyntaxScheme()
 
@@ -32,6 +34,22 @@ object PartialTokenMaker {
 
 
 
+/** Provides a "partially syntax-highlighted" effect for `RSyntaxTextArea`.
+  * Used to adapt [[TokenMaker]] so that tokens after an offset are instead
+  * of an `PartialTokenMaker.UntypedStyle`.
+  *
+  * It is important to call
+  * `PartialTokenMaker.augmentStyleOfTextArea` with the [[RSyntaxTextArea]]
+  * to add the styles which this class uses to the text area.
+  *
+  * Pass this to a syntax document by calling
+  * `RSyntaxDocument.setSyntaxStyle` with an instance of this object.
+  *
+  * Update the effect of where the syntax style is highlighted-up-to.
+  * (Although it can be finicky to force the [[RSyntaxTextArea]] to refresh
+  * the syntax highlighting; re-setting the text works, but this then requires
+  * the caret to be set again, too).
+  */
 class PartialTokenMaker(tokMak: TokenMaker) extends TokenMaker {
   // How far to keep "dull"
   var position: Int = 0
