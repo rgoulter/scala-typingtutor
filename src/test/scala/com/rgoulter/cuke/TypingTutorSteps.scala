@@ -86,7 +86,13 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     // Constraint: Needs to be syntax highlightable; e.g. Java.
     // Constraint: Also, as is implicit elsewhere, needs to have
     //   comments/whitespace which we skip over
-    val inputText = """  2 * 3 /* and ? */ + 4;"""
+//    val inputText = """  2 * 3 /* and ? */ + 4;"""
+    val inputText = """public class X {
+  // this is a comment, the first line has 16 chars + NL.
+  public void main(String args[]) {
+  }
+}
+"""
     val inputLang = "java"
 
     val tokMak = new JavaTokenMaker()
@@ -124,7 +130,7 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     //   is that the Cursor passes over some comments/whitespace.
 
     // XXX This is fragile
-    numberOfCharactersPressed = 8
+    numberOfCharactersPressed = 20
 
     for (i <- 1 to numberOfCharactersPressed) {
       val expectedChar = typingKeyListener.currentChar.sample()
