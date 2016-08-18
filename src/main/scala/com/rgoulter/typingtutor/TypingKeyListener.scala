@@ -182,8 +182,7 @@ class TypingKeyListener(val text: Cell[Document], typedEvents: Stream[TypingEven
 
 
 
-  // collect list-of (expected, actual, time)
-  private val currentChar =
+  val currentChar =
     Cell.lift((text: Document, idx: Int) => text.charAt(idx),
               text,
               currentPos)

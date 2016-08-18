@@ -8,6 +8,7 @@ Feature: Typing Tutor
   Scenario: Partially typed document
     Given a lexable document to practice typing on
     And I have typed some of it
+    Then the cursor should advance
     Then the document should be highlighted up to this point
     And the document should not highlighted further than this
 
@@ -17,4 +18,5 @@ Feature: Typing Tutor
 
     Given a lexable document to practice typing on
     When I type in the expected characters
+    Then the cursor should advance
     Then it should skip over comments and extra whitespace
