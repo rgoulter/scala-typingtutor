@@ -67,10 +67,6 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     val tokMak = new PlainTextTokenMaker()
     partialTokMak = new PartialTokenMaker(tokMak)
 
-    syntaxDoc = new RSyntaxDocument("text/unknown")
-    syntaxDoc.setSyntaxStyle(partialTokMak)
-    syntaxDoc.insertString(0, inputText, null)
-
     // NOTE: we use tokMak for making DocumentImpl,
     // since we want *full* sequence tokens in DocumentImpl
     // for deciding which parts of inputText are comments/skippable.
@@ -78,6 +74,10 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     typingTutorDoc = new DocumentImpl(inputText, tokens)
 
     typingKeyListener = new TypingKLHelper(typingTutorDoc) 
+
+    syntaxDoc = new RSyntaxDocument("text/unknown")
+    syntaxDoc.setSyntaxStyle(partialTokMak)
+    syntaxDoc.insertString(0, inputText, null)
 
     initialPosition = typingKeyListener.currentPos.sample()
   }
@@ -99,10 +99,6 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     val tokMak = new JavaTokenMaker()
     partialTokMak = new PartialTokenMaker(tokMak)
 
-    syntaxDoc = new RSyntaxDocument("text/unknown")
-    syntaxDoc.setSyntaxStyle(partialTokMak)
-    syntaxDoc.insertString(0, inputText, null)
-
     // NOTE: we use tokMak for making DocumentImpl,
     // since we want *full* sequence tokens in DocumentImpl
     // for deciding which parts of inputText are comments/skippable.
@@ -111,18 +107,12 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
 
     typingKeyListener = new TypingKLHelper(typingTutorDoc) 
 
+//    syntaxDoc = new PartialRSyntaxDocument(typingKeyListener, partialTokMak)
+    syntaxDoc = new RSyntaxDocument("text/unknown")
+    syntaxDoc.setSyntaxStyle(partialTokMak)
+    syntaxDoc.insertString(0, inputText, null)
+
     initialPosition = typingKeyListener.currentPos.sample()
-  }
-
-
-  Given("""^I have typed some of it$"""){ () =>
-    // Arbitrary; just correctly type some of it.
-    numberOfCharactersPressed = 8
-
-    for (i <- 1 to numberOfCharactersPressed) {
-      val expectedChar = typingKeyListener.currentChar.sample()
-      typingKeyListener.press(expectedChar)
-    }
   }
 
 
@@ -132,12 +122,16 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     //   is that the Cursor passes over some comments/whitespace.
 
     // XXX This is fragile
-    numberOfCharactersPressed = 20
+    numberOfCharactersPressed = 23
 
     for (i <- 1 to numberOfCharactersPressed) {
       val expectedChar = typingKeyListener.currentChar.sample()
       typingKeyListener.press(expectedChar)
     }
+
+    // Update position of PartialTokenMaker
+    currentPosition = typingKeyListener.currentPos.sample()
+    partialTokMak.position = currentPosition
   }
 
 
@@ -153,6 +147,10 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
       val expectedChar = typingKeyListener.currentChar.sample()
       typingKeyListener.press(expectedChar)
     }
+
+    // Update position of PartialTokenMaker
+    currentPosition = typingKeyListener.currentPos.sample()
+    partialTokMak.position = currentPosition
   }
 
 
@@ -167,6 +165,8 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
       val incorrectChar = if (expectedChar == 'x') 'y' else 'x'
       typingKeyListener.press(incorrectChar)
     }
+
+    currentPosition = typingKeyListener.currentPos.sample()
   }
 
 
@@ -177,8 +177,6 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     //   But in cases when skipping over comments/whitespace,
     //   it's possible a psychotic program could pass for just
     //   checking offsets.
-
-    currentPosition = typingKeyListener.currentPos.sample()
 
     assert(currentPosition > initialPosition)
   }
@@ -201,6 +199,14 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     val positionDifference = currentPosition - initialPosition
     assert(positionDifference > numberOfCharactersPressed)
   }
+
+
+  // I was running into trouble in the GUI with RSyntaxTextArea because the
+  // RSyntaxDocument would cache a line of Tokens, so as the
+  // PartialTokenMaker.position advanced *between* calls to
+  // RSyntaxDocument.getTokensOnLine()
+  // (e.g. called by modelToView, when caret position is changed),
+  // the tokens used to paint would be 'stale'.
 
 
   Then("""^the document should be highlighted up to this point$"""){ () =>
