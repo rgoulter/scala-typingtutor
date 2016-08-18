@@ -72,21 +72,16 @@ class TypingTutorPanel(text: String,
   })
 
 
-  // To save time, the text area only updates when
-  // things change. This isn't ideal.
-  //
-  // This implementation is hack-ish, but it's not
-  // easy to figure out what to subclass.
+  // Forces RSyntaxDocument to invalidate its cache for the tokenList of the
+  // line the caret is on.
+  // If this isn't called, the RSyntaxTextArea will only update the syntax
+  // highlighting as the caret moves to new lines.
   private def forceRefresh(): Unit = {
-    val pos = textArea.getCaretPosition()
-    val selStart = textArea.getSelectionStart
-    val selEnd = textArea.getSelectionEnd
-
-    partialTokMak.position = selStart
-    textArea.setText(textArea.getText())
-
-    textArea.setCaretPosition(selStart)
-    textArea.moveCaretPosition(selEnd)
+    // This will invalidate RSyntaxDocument's cache, as the cache is
+    // only kept for one line at a time.
+    // TODO: May be better to subclass SyntaxDocument.
+    val caretLine = textArea.getCaretLineNumber()
+    syntaxDoc.getTokenListForLine(caretLine + 1)
   }
 
   // Every time we set the text..
@@ -138,6 +133,8 @@ class TypingTutorPanel(text: String,
       textArea.setCaretPosition(position + numIncorrect)
       textArea.moveCaretPosition(position + 1)
     }
+
+    partialTokMak.position = position
 
     forceRefresh()
   })
