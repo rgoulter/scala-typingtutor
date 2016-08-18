@@ -69,6 +69,7 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
 
     syntaxDoc = new RSyntaxDocument("text/unknown")
     syntaxDoc.setSyntaxStyle(partialTokMak)
+    syntaxDoc.insertString(0, inputText, null)
 
     // NOTE: we use tokMak for making DocumentImpl,
     // since we want *full* sequence tokens in DocumentImpl
@@ -100,6 +101,7 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
 
     syntaxDoc = new RSyntaxDocument("text/unknown")
     syntaxDoc.setSyntaxStyle(partialTokMak)
+    syntaxDoc.insertString(0, inputText, null)
 
     // NOTE: we use tokMak for making DocumentImpl,
     // since we want *full* sequence tokens in DocumentImpl
@@ -205,7 +207,8 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     // Check tokens in doc. after offset are not Unstyled.
     import PartialTokenMaker.UNTYPED_TOKEN
 
-    val tokens = syntaxDoc.iterator().asScala
+    val tokens = syntaxDoc.iterator().asScala.toList
+    assert(tokens.length > 0)
 
     for (tok <- tokens) {
       if (tok.getEndOffset() < currentPosition) {
@@ -222,7 +225,8 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     // Implicit constraint on input: Whole document not yet typed in
     assume(currentPosition < typingTutorDoc.size)
 
-    val tokens = syntaxDoc.iterator().asScala
+    val tokens = syntaxDoc.iterator().asScala.toList
+    assert(tokens.length > 0)
 
     for (tok <- tokens) {
       if (tok.getOffset() > currentPosition) {
