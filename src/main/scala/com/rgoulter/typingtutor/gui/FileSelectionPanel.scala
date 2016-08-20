@@ -2,11 +2,8 @@ package com.rgoulter.typingtutor.gui
 
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
-import java.awt.event.FocusEvent
-import java.awt.event.FocusListener
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.awt.event.KeyListener
 import java.io.File
 
 import javax.swing.AbstractAction

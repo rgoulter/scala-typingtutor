@@ -4,7 +4,6 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
-import java.awt.event.FocusListener
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
@@ -172,12 +171,10 @@ class TypingTutorPanel(text: String,
   // This probably isn't idiomatic way to do focus,
   // see https://docs.oracle.com/javase/tutorial/uiswing/misc/focus.html
   setFocusable(true)
-  addFocusListener(new FocusListener {
+  addFocusListener(new FocusAdapter {
     override def focusGained(focusEvt: FocusEvent): Unit = {
       textArea.requestFocusInWindow()
     }
-
-    override def focusLost(focusEvt: FocusEvent): Unit = {}
   })
 
 
