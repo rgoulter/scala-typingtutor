@@ -4,13 +4,18 @@ import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
+import java.awt.event.ActionEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
+import javax.swing.AbstractAction
+import javax.swing.InputMap
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollBar
+import javax.swing.KeyStroke
 import javax.swing.ScrollPaneConstants
 import javax.swing.text.BadLocationException
 
@@ -57,31 +62,29 @@ class TypingTutorPanel(text: String,
 
   textArea.setCaretPosition(0)
 
-  // Ignore/Suppress keys which move the cursor.
-  textArea.addKeyListener(new KeyAdapter {
-    override def keyPressed(ke: KeyEvent): Unit = {
-      ke.getKeyCode() match {
-        case KeyEvent.VK_LEFT  => ke.consume()
-        case KeyEvent.VK_RIGHT => ke.consume()
-        case KeyEvent.VK_UP    => ke.consume()
-        case KeyEvent.VK_DOWN  => ke.consume()
-        case KeyEvent.VK_END   => ke.consume()
-        case KeyEvent.VK_HOME  => ke.consume()
-        case KeyEvent.VK_PAGE_UP   => ke.consume()
-        case KeyEvent.VK_PAGE_DOWN => ke.consume()
-        case _ => ()
-      }
+  // Ignore/Suppress keys we don't use.
+  // It would be distracting for user to be able to select-all,
+  // or to scroll the scrollpane viewport up/down.
+  private def clearInputMap(im: InputMap): Unit = {
+    if (im != null) {
+      im.clear()
+      clearInputMap(im.getParent())
     }
-  })
+  }
+  clearInputMap(textArea.getInputMap(JComponent.WHEN_FOCUSED))
+  clearInputMap(scrollPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT))
 
-  textArea.addKeyListener(new KeyAdapter {
-    override def keyPressed(ke: KeyEvent): Unit = {
-      ke.getKeyCode() match {
-        case KeyEvent.VK_ESCAPE  => {
-          pressedEscSink.send(())
-        }
-        case _ => ()
-      }
+
+  val QuitSessionItem = "quitsession"
+
+  val escKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)
+  val panelInputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+  panelInputMap.put(escKeyStroke, QuitSessionItem)
+
+  val panelActionMap = getActionMap()
+  panelActionMap.put(QuitSessionItem, new AbstractAction {
+    override def actionPerformed(evt: ActionEvent): Unit = {
+      pressedEscSink.send(())
     }
   })
 
