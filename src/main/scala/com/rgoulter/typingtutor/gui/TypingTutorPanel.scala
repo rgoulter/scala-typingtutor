@@ -2,12 +2,17 @@ package com.rgoulter.typingtutor.gui
 
 import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
 import javax.swing.JPanel
+import javax.swing.JScrollBar
+import javax.swing.ScrollPaneConstants
+import javax.swing.text.BadLocationException
 
 import org.fife.ui.rtextarea.CaretStyle
 import org.fife.ui.rtextarea.RTextScrollPane
@@ -30,6 +35,13 @@ class TypingTutorPanel(text: String,
                        document: Document,
                        tokenMaker: TokenMaker) extends JPanel {
   val textArea = new RSyntaxTextArea(20, 60)
+
+  val scrollPane = new RTextScrollPane(textArea)
+  // Never show scrollbars;
+  // at the moment this is slightly a bad idea, since we don't particularly wrap text.
+  scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
+  scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER)
+  scrollPane.setWheelScrollingEnabled(false)
 
   PartialTokenMaker.augmentStyleOfTextArea(textArea)
 
@@ -109,6 +121,30 @@ class TypingTutorPanel(text: String,
   private val typedEventsKL = new StreamOfKeyListener()
   val typeTutorKL = new TypingKeyListener(textCell, typedEventsKL.typedEvents)
 
+  def linesInView(): Option[(Int, Int)] = {
+    val viewRect = scrollPane.getViewport().getViewRect()
+
+    val topLeftPt = viewRect.getLocation()
+    val bottomRightPt = new Point(topLeftPt.getX().toInt + viewRect.getWidth.toInt,
+                                  topLeftPt.getY().toInt + viewRect.getHeight.toInt)
+
+    // The main limitation of this computation is,
+    // if even *1 pixel* of lineX is on screen, then lineX
+    // it'll happily declare lineX as the first/last on screen.
+    def firstOffset = textArea.viewToModel(topLeftPt)
+    def lastOffset  = textArea.viewToModel(bottomRightPt)
+
+    try {
+      val firstLine = textArea.getLineOfOffset(firstOffset)
+      val lastLine  = textArea.getLineOfOffset(lastOffset)
+
+      Some((firstLine, lastLine))
+    } catch {
+      case e: BadLocationException => None
+    }
+  }
+
+
   // n.b. important that this TypingKeyListener gets added after the other KeyListeners,
   // which intercept keystrokes which need to be ignored.
   textArea.addKeyListener(typedEventsKL)
@@ -120,6 +156,31 @@ class TypingTutorPanel(text: String,
       textArea.getCaret().setVisible(true)
     }
   })
+
+  def caretYInViewport: Int = {
+    val caretYInTextArea = textArea.modelToView(textArea.getCaretPosition()).getY()
+    val scrollPaneY = scrollPane.getViewport().getViewPosition().getY()
+
+    (caretYInTextArea - scrollPaneY).toInt
+  }
+
+  // Of ScrollPane's height.
+  def isCaretBeyondProportionOfHeight(prop: Double): Boolean = {
+    val caretY = caretYInViewport
+    val height = prop * scrollPane.getHeight()
+
+    caretY > height
+  }
+
+  // Of ScrollPane's height.
+  def rectOfCaretPlusProportionOfHeight(prop: Double): Rectangle = {
+    assert(0 <= prop && prop <= 1)
+    val padY = (1 - prop) * scrollPane.getViewport().getHeight()
+    val height = prop * scrollPane.getViewport().getHeight()
+    val caretY = textArea.modelToView(textArea.getCaretPosition()).getY()
+
+    new Rectangle(0, caretY.toInt - padY.toInt, textArea.getWidth(), (caretY + height).toInt)
+  }
 
   // n.b. it's important that a reference to this `listener` is retained,
   // or else the listener's callback won't be executed.
@@ -142,6 +203,16 @@ class TypingTutorPanel(text: String,
     } else {
       textArea.setCaretPosition(position + numIncorrect)
       textArea.moveCaretPosition(position + 1)
+    }
+
+    if (textArea.getHeight() > 0) {
+      // Can only check Caret position when size is positive.
+      if (isCaretBeyondProportionOfHeight(0.8)) {
+        val rectToView = rectOfCaretPlusProportionOfHeight(0.8)
+
+        // UI CHANGE! I hope the effect isn't too sudden.
+        textArea.scrollRectToVisible(rectToView)
+      }
     }
 
     partialTokMak.position = position
@@ -181,7 +252,6 @@ class TypingTutorPanel(text: String,
   })
 
 
-  val scrollPane = new RTextScrollPane(textArea)
   setLayout(new BorderLayout())
   add(scrollPane)
 }
