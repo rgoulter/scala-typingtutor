@@ -2,6 +2,7 @@ package com.rgoulter.typingtutor.gui
 
 import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.awt.event.KeyAdapter
@@ -22,7 +23,6 @@ import com.rgoulter.typingtutor.Document
 import com.rgoulter.typingtutor.PartialTokenMaker
 import com.rgoulter.typingtutor.StreamOfKeyListener
 import com.rgoulter.typingtutor.TypingKeyListener
-
 
 
 
@@ -110,6 +110,14 @@ class TypingTutorPanel(text: String,
   // n.b. important that this TypingKeyListener gets added after the other KeyListeners,
   // which intercept keystrokes which need to be ignored.
   textArea.addKeyListener(typedEventsKL)
+
+  textArea.addFocusListener(new FocusAdapter {
+    override def focusGained(e: FocusEvent): Unit = {
+      // Need to ensure caret remains visible,
+      // e.g. when switching window and returning focus.
+      textArea.getCaret().setVisible(true)
+    }
+  })
 
   // n.b. it's important that a reference to this `listener` is retained,
   // or else the listener's callback won't be executed.
