@@ -92,7 +92,7 @@ class FileSelectionPanel(sourceFilesDir: File, fileProgress: FileProgress) exten
   add(label, BorderLayout.NORTH)
 
 
-  private val table = new JTable(tableModel)
+  val table = new JTable(tableModel)
 
   table.setCellSelectionEnabled(false)
   table.setRowSelectionAllowed(true)

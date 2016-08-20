@@ -116,11 +116,31 @@ object Main {
       })
 
 
-    val endTypingListener = typingTutorPanel.statsStream.listen(_ =>
+    val endTypingListener = typingTutorPanel.statsStream.listen({ _ =>
       // Stats emitted only at end of game/lesson.
 
       cardLayout.show(cards, ShowStatsCard)
-    )
+
+      // kludge rather than work with focus subsystem.
+      statsPanel.continueSessionButton.requestFocusInWindow()
+    })
+
+    val afterStatsListener = statsPanel.afterStats.listen { action =>
+      action match {
+        case AfterStatsActions.ContinueSession(offset) =>
+        case AfterStatsActions.RedoSession(offset) =>
+        case AfterStatsActions.SelectFile() => {
+          cardLayout.show(cards, FileSelectCard)
+
+          // kludge b/c of mishandling of focus subsystem
+          fileSelectPanel.table.requestFocusInWindow()
+        }
+        case AfterStatsActions.ExitTypingTutor() => {
+          // Exit the application.
+          frame.dispose()
+        }
+      }
+    }
 
 
     // Start all Swing applications on the EDT.
