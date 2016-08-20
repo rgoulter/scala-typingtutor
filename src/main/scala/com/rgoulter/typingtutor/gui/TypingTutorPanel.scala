@@ -40,6 +40,9 @@ class TypingTutorPanel(text: String,
   textArea.getCaret().setVisible(true)
   textArea.getCaret().setBlinkRate(0)
 
+  for(ml <- textArea.getMouseListeners)
+    textArea.removeMouseListener(ml)
+
   textArea.setCaretPosition(0)
 
   // Ignore/Suppress keys which move the cursor.
