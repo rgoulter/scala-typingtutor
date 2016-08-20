@@ -16,7 +16,7 @@ import scala.collection.immutable.TreeMap
 class SimpleDocumentImpl(text: String) extends Document {
   val expectedChars: TreeMap[Int, Char] = {
     // whole range is typeable.
-    val pairs = Range(0, size).toList.zip(text)
+    val pairs = Range(0, text.length()).toList.zip(text)
     new TreeMap[Int, Char]() ++ pairs
   }
 }
