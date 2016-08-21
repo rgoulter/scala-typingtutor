@@ -82,11 +82,6 @@ class StreamOfKeyListener extends KeyAdapter {
 
 // callback: (position, numIncorrect) => ()
 class TypingKeyListener(val text: Cell[Document], typedEvents: Stream[TypingEvent]) {
-//  /** Stream of [[Backspace]] or [[TypedCharacter]] values.
-//    *
-//    * Represents events received in the [[KeyEvent]] of [[keyTyped]] calls.
-//    */
-
   /** Stream of `(character, time)` values, representing
     *  which keys were pressed at what time.
     */
