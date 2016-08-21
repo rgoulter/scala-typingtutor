@@ -168,7 +168,8 @@ class TypingKeyListener(val text: Cell[Document], typedEvents: Stream[TypingEven
 
 
 
-  val totalTypedCt = typedEvents.accum[Int](0, (_, n) => n + 1)
+  // totalTypedCt needs to reset after each change to `text` cell.
+  val totalTypedCt = Cell.switchC(text.map(_ => typedEvents.accum[Int](0, (_, n) => n + 1)))
 
   val totalTypedIncorrectCt =
     Cell.lift[Int, Int, Int]((total, correct) => total - correct,
@@ -190,7 +191,9 @@ class TypingKeyListener(val text: Cell[Document], typedEvents: Stream[TypingEven
     })
 
   val keyEntries: Cell[Array[(Char, Char, Long)]] =
-    keyEntryEvts.accum(Array(), (tup, acc) => { acc :+ tup })
+    Cell.switchC(text.map(_ =>
+      keyEntryEvts.accum(Array(), (tup, acc) => { acc :+ tup })
+    ))
 
 
 
