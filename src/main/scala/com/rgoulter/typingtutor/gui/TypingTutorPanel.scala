@@ -5,6 +5,8 @@ import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.KeyAdapter
@@ -254,11 +256,8 @@ class TypingTutorPanel(text: String,
   val statsStream = finishingOffset.snapshot(typeTutorKL.stats)
 
 
-  // This probably isn't idiomatic way to do focus,
-  // see https://docs.oracle.com/javase/tutorial/uiswing/misc/focus.html
-  setFocusable(true)
-  addFocusListener(new FocusAdapter {
-    override def focusGained(focusEvt: FocusEvent): Unit = {
+  addComponentListener(new ComponentAdapter {
+    override def componentShown(evt: ComponentEvent): Unit = {
       textArea.requestFocusInWindow()
     }
   })

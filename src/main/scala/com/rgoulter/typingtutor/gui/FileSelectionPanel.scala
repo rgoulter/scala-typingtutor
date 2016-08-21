@@ -2,6 +2,8 @@ package com.rgoulter.typingtutor.gui
 
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.io.File
@@ -172,6 +174,13 @@ class FileSelectionPanel(sourceFilesDir: File, fileProgress: FileProgress) exten
 
         selectedFileSink.send(Some(destFile))
       }
+    }
+  })
+
+
+  addComponentListener(new ComponentAdapter {
+    override def componentShown(evt: ComponentEvent): Unit = {
+      table.requestFocusInWindow()
     }
   })
 }

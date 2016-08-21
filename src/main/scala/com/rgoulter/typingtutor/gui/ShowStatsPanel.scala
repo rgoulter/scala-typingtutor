@@ -2,8 +2,8 @@ package com.rgoulter.typingtutor.gui
 
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import java.awt.event.KeyEvent
 
 import javax.swing.AbstractAction
@@ -133,4 +133,11 @@ class ShowStatsPanel(statsStream: Stream[TypedStats]) extends JPanel {
   }
 
   val listener = statsStream.listen(setStats)
+
+
+  addComponentListener(new ComponentAdapter {
+    override def componentShown(evt: ComponentEvent): Unit = {
+      continueSessionButton.requestFocusInWindow()
+    }
+  })
 }
