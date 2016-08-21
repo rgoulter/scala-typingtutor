@@ -78,7 +78,7 @@ class TypingTutorPanel(text: String,
   val QuitSessionItem = "quitsession"
 
   val escKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)
-  val panelInputMap = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+  val panelInputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
   panelInputMap.put(escKeyStroke, QuitSessionItem)
 
   val panelActionMap = getActionMap()

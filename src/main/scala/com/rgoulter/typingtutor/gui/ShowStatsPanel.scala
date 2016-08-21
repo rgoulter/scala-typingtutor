@@ -98,9 +98,9 @@ class ShowStatsPanel(statsStream: Stream[TypedStats]) extends JPanel {
 
   // Bind 'Esc' to ExitAction on JButton as well.
   val ExitItem = "exit_typingtutor"
-  val exitInputMap = exitButton.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+  val exitInputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
   exitInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), ExitItem)
-  exitButton.getActionMap().put(ExitItem, ExitAction)
+  getActionMap().put(ExitItem, ExitAction)
 
   // Something has been quite messed up if this is necessary.
   val EnterKS = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
