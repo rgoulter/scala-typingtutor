@@ -5,6 +5,7 @@ import java.io.File
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import javax.swing.UIManager
 
 import sodium.Cell
 import sodium.Stream
@@ -151,6 +152,13 @@ object Main {
           frame.dispose()
         }
       }
+    }
+
+
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+    } catch {
+      case e: Throwable =>
     }
 
 
