@@ -25,9 +25,9 @@ object AfterStatsActions {
 
   class ContinueFrom(val offset: Int = 0)
 
-  case class ContinueSession(lastOffset: Int) extends ContinueFrom(lastOffset) with AfterStats
+  case class ContinueSession(finalOffset: Int) extends ContinueFrom(finalOffset) with AfterStats
 
-  case class RedoSession(beginningOffset: Int) extends ContinueFrom(beginningOffset) with AfterStats
+  case class RedoSession(initialOffset: Int) extends ContinueFrom(initialOffset) with AfterStats
 
   case class SelectFile() extends AfterStats
 
@@ -37,21 +37,23 @@ object AfterStatsActions {
 
 
 class ShowStatsPanel(statsStream: Stream[TypedStats]) extends JPanel {
+  // Keep track of initial/final offsets in mutable state.
+  private var initialOffset: Int = 0
+  private var finalOffset: Int = 0
+
   import AfterStatsActions.AfterStats
   private val afterStatsSink = new StreamSink[AfterStats]()
   val afterStats: Stream[AfterStats] = afterStatsSink
 
   val ContinueSessionAction = new AbstractAction {
     override def actionPerformed(evt: ActionEvent): Unit = {
-      val lastOffset = 0
-      afterStatsSink.send(AfterStatsActions.ContinueSession(lastOffset))
+      afterStatsSink.send(AfterStatsActions.ContinueSession(finalOffset))
     }
   }
 
   val RedoSessionAction = new AbstractAction {
     override def actionPerformed(evt: ActionEvent): Unit = {
-      val beginningOffset = 0
-      afterStatsSink.send(AfterStatsActions.RedoSession(beginningOffset))
+      afterStatsSink.send(AfterStatsActions.RedoSession(initialOffset))
     }
   }
 
@@ -124,6 +126,9 @@ class ShowStatsPanel(statsStream: Stream[TypedStats]) extends JPanel {
 </table></html>"""
 
   private def setStats(stats: TypedStats): Unit = {
+    initialOffset = stats.initialOffset
+    finalOffset = stats.finalOffset
+
     label.setText(stringOfStats(stats))
   }
 

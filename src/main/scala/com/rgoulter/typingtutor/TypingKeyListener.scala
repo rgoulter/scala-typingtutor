@@ -202,11 +202,30 @@ class TypingKeyListener(val text: Cell[Document], typedEvents: Stream[TypingEven
 
 
 
-  val stats: Cell[TypedStats] =
-    Cell.lift((numTypedTotal: Int, numTypedCorrect: Int, numTypedIncorrect: Int, keyEntries: Array[(Char, Char, Long)]) =>
-                new TypedStats(numTypedTotal, numTypedCorrect, numTypedIncorrect, keyEntries),
+  // Convenience function since Cell.lift only supports up-to 4-ary functions.
+  private def mkStats(tup: (Int, Int, Int),
+                      entries: Array[(Char, Char, Long)],
+                      offsets: (Int, Int)): TypedStats = {
+    val (numTypedTotal, numTypedCorrect, numTypedIncorrect) = tup
+    val (initialOffset, finalOffset) = offsets
+
+    new TypedStats(numTypedTotal,
+                   numTypedCorrect,
+                   numTypedIncorrect,
+                   entries,
+                   initialOffset,
+                   finalOffset)
+  }
+
+  private val numTypedTuple =
+    Cell.lift((x: Int, y: Int, z: Int) => (x, y, z),
               totalTypedCt,
               numCorrect,
-              totalTypedIncorrectCt,
-              keyEntries)
+              totalTypedIncorrectCt)
+  private val offsets =
+    Cell.lift((initOffs: Int, finalOffs: Int) => (initOffs, finalOffs),
+              text.map(_.initialOffset),
+              currentPos)
+  val stats: Cell[TypedStats] =
+    Cell.lift(mkStats, numTypedTuple, keyEntries, offsets)
 }

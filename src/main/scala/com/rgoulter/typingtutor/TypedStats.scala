@@ -6,7 +6,9 @@ package com.rgoulter.typingtutor
 class TypedStats(val numTotal: Int,
                  val numCorrect: Int,
                  val numIncorrect: Int,
-                 val entries: Array[(Char, Char, Long)]) {
+                 val entries: Array[(Char, Char, Long)],
+                 val initialOffset: Int,
+                 val finalOffset: Int) {
   /** Prints stats to stdout. */
   def print(): Unit = {
     println(s"Total: $numTotal")
