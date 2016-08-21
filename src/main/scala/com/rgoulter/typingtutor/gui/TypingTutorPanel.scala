@@ -233,6 +233,15 @@ class TypingTutorPanel(text: String,
     textCell.send(doc)
   }
 
+  // TODO If the interface here were easier to use, this function wouldn't be necessary.
+  def continueFromOffset(offset: Int): Unit = {
+    // The typingTutKL.markers listener takes care of updating other things
+    // regarding state.
+
+    val newDoc = textCell.sample().withInitialOffset(offset)
+    textCell.send(newDoc)
+  }
+
 
   private val pressedEscSink = new StreamSink[Unit]()
 

@@ -44,4 +44,6 @@ abstract class Document {
   /** The earliest offset after the given offset, if one exists. */
   def nextTypeableOffset(offset: Int): Option[Int] =
     typeableOffsets.from(offset + 1).headOption
+
+  def withInitialOffset(newInitialOffset: Int): Document
 }

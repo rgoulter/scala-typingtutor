@@ -19,6 +19,10 @@ class SimpleDocumentImpl(text: String) extends Document {
     val pairs = Range(0, text.length()).toList.zip(text)
     new TreeMap[Int, Char]() ++ pairs
   }
+
+  // SimpleDocumentImpl doesn't really do initialOffset
+  def withInitialOffset(newInitialOffset: Int): Document =
+    this
 }
 
 
@@ -103,5 +107,9 @@ class DocumentImpl(text: String,
     } else {
       fromGivenInitOffs.head
     }
+  }
+
+  def withInitialOffset(newInitialOffset: Int): Document = {
+    new DocumentImpl(text, tokens, newInitialOffset)
   }
 }

@@ -72,6 +72,7 @@ object Main {
     val fileSelectListener = fileSelectPanel.selectedFile.listen { maybeFile =>
       val (text, doc, tokMak) = maybeFile match {
         case Some(selectedFile) => {
+          // DOCUMENT load from file
           val tokMak = Utils.tokenMakerForFile(selectedFile)
 
           val source = scala.io.Source.fromFile(selectedFile)
@@ -127,8 +128,18 @@ object Main {
 
     val afterStatsListener = statsPanel.afterStats.listen { action =>
       action match {
-        case AfterStatsActions.ContinueSession(offset) =>
-        case AfterStatsActions.RedoSession(offset) =>
+        case AfterStatsActions.ContinueSession(offset) => {
+          // DOCUMENT with different offset
+          typingTutorPanel.continueFromOffset(offset)
+          cardLayout.show(cards, TypingTutorCard)
+          typingTutorPanel.requestFocus()
+        }
+        case AfterStatsActions.RedoSession(offset) => {
+          // DOCUMENT with different offset
+          typingTutorPanel.continueFromOffset(offset)
+          cardLayout.show(cards, TypingTutorCard)
+          typingTutorPanel.requestFocus()
+        }
         case AfterStatsActions.SelectFile() => {
           cardLayout.show(cards, FileSelectCard)
 
