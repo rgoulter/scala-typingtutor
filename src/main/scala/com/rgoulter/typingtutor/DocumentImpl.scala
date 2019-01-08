@@ -44,6 +44,9 @@ class DocumentImpl(text: String,
     // select the earliest token for Newline,
     // or the earliest token otherwise.
     def dominantSkippableTok(tok1: Token, tok2: Token): Token = {
+      System.out.println("dominantSkippableTok:")
+      System.out.println(s"tok1: ${tok1}; offset: ${tok1.getOffset()}; textOffset: ${tok1.getTextOffset()}")
+      System.out.println(s"tok2: ${tok2}; offset: ${tok2.getOffset()}; textOffset: ${tok1.getTextOffset()}")
       if (tok1.getType() == TokenTypes.NULL) {
         tok1
       } else if (tok2.getType() == TokenTypes.NULL) {
@@ -62,7 +65,9 @@ class DocumentImpl(text: String,
 
       if (tok.isComment()) {
         (res, skippableTok)
-      } else if (tok.isWhitespace() || tok.getType() == TokenTypes.NULL) {
+      } else if (tok.isWhitespace() ||
+        tok.getType() == TokenTypes.NULL ||
+        text.charAt(tok.getOffset()) == '\r') {
         skippableTok match {
           case Some(wsTok) =>
             (res, Some(dominantSkippableTok(tok, wsTok)))
@@ -70,6 +75,14 @@ class DocumentImpl(text: String,
             (res, Some(tok))
         }
       } else {
+        val rawExpectedStr = text.substring(tok.getOffset(), tok.getEndOffset())
+        val expectedStr = rawExpectedStr.replaceAll("\r", "\\\\r")
+        if (rawExpectedStr == "\r") {
+          System.out.println("foldRight: got an \r token:")
+          System.out.println(tok)
+          System.out.println()
+        }
+
         skippableTok match {
           case Some(wsTok) => {
             (tok +: wsTok +: res, None)
@@ -91,9 +104,15 @@ class DocumentImpl(text: String,
       } else if (tok.isWhitespace()) {
         // Limit whitespace characters we expect to just 1 char.
         val tokRange = Range(tok.getOffset(), tok.getOffset() + 1)
+        val rawExpectedStr = text.substring(tok.getOffset(), tok.getEndOffset())
+        val expectedStr = rawExpectedStr.replaceAll("\r", "\\r")
+        System.out.println(s"Expected Whitespace: ${expectedStr}")
         map ++ tokRange.zip(tokRange.map(text.charAt))
       } else {
         val tokRange = Range(tok.getOffset(), tok.getEndOffset())
+        val rawExpectedStr = text.substring(tok.getOffset(), tok.getEndOffset())
+        val expectedStr = rawExpectedStr.replaceAll("\r", "\\\\r")
+        System.out.println(s"Expected Other: ${expectedStr}")
         map ++ tokRange.zip(tokRange.map(text.charAt))
       }
     }

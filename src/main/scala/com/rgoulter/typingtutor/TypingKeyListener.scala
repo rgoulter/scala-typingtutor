@@ -141,6 +141,8 @@ class TypingKeyListener(val text: Cell[Document], typedEvents: Stream[TypingEven
 
                 State(newNumCorrect, 0, newPosition)
               } else {
+                System.err.println(s"input wrong char; expected '${Character.getName(expectedChar)}' got '${Character.getName(typedChar)}'")
+
                 // Mis-typed character.
                 // Previously didn't have any incorrect, now we do.
                 State(numCorrect, 1, position)
