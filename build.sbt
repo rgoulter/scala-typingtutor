@@ -32,6 +32,13 @@ lazy val tutor = (project in file("."))
         "org.scalatest" %% "scalatest" % "2.2.4" % "test")
   ).dependsOn(root)
 
-enablePlugins(CucumberPlugin)
+val framework = new TestFramework("com.waioeka.sbt.runner.CucumberFramework")
+testFrameworks += framework
 
-CucumberPlugin.glue := "com/rgoulter/cuke/"
+testOptions in Test += Tests.Argument(framework,"--glue","com/rgoulter/cuke/")
+testOptions in Test += Tests.Argument(framework,"--plugin","pretty")
+testOptions in Test += Tests.Argument(framework,"--plugin","html:/tmp/html")
+testOptions in Test += Tests.Argument(framework,"--plugin","json:/tmp/json")
+parallelExecution in Test := false
+
+unmanagedClasspath in Test += baseDirectory.value / "src/test/features"
