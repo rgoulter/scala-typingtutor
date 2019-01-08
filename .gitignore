@@ -1,7 +1,6 @@
 .cache
 .classpath
 .project
-project/
 target/
 
 
@@ -18,4 +17,3 @@ bin/
 typingtutor/
 typingtutor.db
 
->>>>>>> master
