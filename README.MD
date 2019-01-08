@@ -1,5 +1,7 @@
 # Typing Tutor
 
+[![Build Status](https://travis-ci.com/rgoulter/scala-typingtutor.svg?branch=master)](https://travis-ci.com/rgoulter/scala-typingtutor)
+
 A typing tutor inspired by [typing.io](https://typing.io),
 a typing tutor which uses source code for typing practice.
 
