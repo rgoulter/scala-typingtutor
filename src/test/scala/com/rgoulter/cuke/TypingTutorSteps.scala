@@ -5,7 +5,7 @@ import scala.collection.JavaConverters.asScalaIteratorConverter
 import cucumber.api.scala.{ScalaDsl, EN}
 import cucumber.api.PendingException
 
-import com.waioeka.sbt.runner.CucumberRunner
+import com.waioeka.sbt.runner.CucumberSpec
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxDocument
 import org.fife.ui.rsyntaxtextarea.modes.JavaTokenMaker
@@ -28,7 +28,7 @@ import com.rgoulter.typingtutor.Utils
 
 
 /** Allows SBT to run Cucumber tests with `sbt test`. */
-class CucumberTestSuite extends CucumberRunner
+class CucumberTestSuite extends CucumberSpec
 
 
 

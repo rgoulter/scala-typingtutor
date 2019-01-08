@@ -17,6 +17,7 @@ libraryDependencies += "sodium" % "sodium_2.11" % "1.0" withSources() withJavado
 libraryDependencies += "org.xerial" % "sqlite-jdbc" % "3.8.11.2"
 
 libraryDependencies ++= Seq (
+        "com.waioeka.sbt" %% "cucumber-runner" % "0.1.3" % "test",
         "info.cukes" % "cucumber-core" % "1.2.4" % "test",
         "info.cukes" %% "cucumber-scala" % "1.2.4" % "test",
         "info.cukes" % "cucumber-jvm" % "1.2.4" % "test",
