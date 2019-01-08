@@ -62,7 +62,9 @@ class DocumentImpl(text: String,
 
       if (tok.isComment()) {
         (res, skippableTok)
-      } else if (tok.isWhitespace() || tok.getType() == TokenTypes.NULL) {
+      } else if (tok.isWhitespace() ||
+        tok.getType() == TokenTypes.NULL ||
+        text.charAt(tok.getOffset()) == '\r') {
         skippableTok match {
           case Some(wsTok) =>
             (res, Some(dominantSkippableTok(tok, wsTok)))
