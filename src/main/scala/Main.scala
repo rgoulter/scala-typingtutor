@@ -96,9 +96,8 @@ class TypingTutFrame extends JFrame("Typing Tutor") {
       .filterOption(
         typingTutorPanel.finishingOffset
           .snapshot(currentFile, { (offset: Int, currFile: Option[File]) =>
-            currFile match {
-              case Some(file) => Some((file, offset))
-              case None       => None
+            currFile.map { file =>
+              (file, offset)
             }
           }))
       .listen({
@@ -117,30 +116,28 @@ class TypingTutFrame extends JFrame("Typing Tutor") {
 //    statsPanel.continueSessionButton.requestFocus()
   })
 
-  val afterStatsListener = statsPanel.afterStats.listen { action =>
-    action match {
-      case AfterStatsActions.ContinueSession(offset) => {
-        // DOCUMENT with different offset
-        typingTutorPanel.continueFromOffset(offset)
-        cardLayout.show(cards, TypingTutorCard)
-//        typingTutorPanel.textArea.requestFocus()
-      }
-      case AfterStatsActions.RedoSession(offset) => {
-        // DOCUMENT with different offset
-        typingTutorPanel.continueFromOffset(offset)
-        cardLayout.show(cards, TypingTutorCard)
-//        typingTutorPanel.textArea.requestFocus()
-      }
-      case AfterStatsActions.SelectFile() => {
-        cardLayout.show(cards, FileSelectCard)
+  val afterStatsListener = statsPanel.afterStats.listen {
+    case AfterStatsActions.ContinueSession(offset) => {
+      // DOCUMENT with different offset
+      typingTutorPanel.continueFromOffset(offset)
+      cardLayout.show(cards, TypingTutorCard)
+//      typingTutorPanel.textArea.requestFocus()
+    }
+    case AfterStatsActions.RedoSession(offset) => {
+      // DOCUMENT with different offset
+      typingTutorPanel.continueFromOffset(offset)
+      cardLayout.show(cards, TypingTutorCard)
+//      typingTutorPanel.textArea.requestFocus()
+    }
+    case AfterStatsActions.SelectFile() => {
+      cardLayout.show(cards, FileSelectCard)
 
-        // kludge b/c of mishandling of focus subsystem
-//        fileSelectPanel.table.requestFocus()
-      }
-      case AfterStatsActions.ExitTypingTutor() => {
-        // Exit the application.
-        dispose()
-      }
+      // kludge b/c of mishandling of focus subsystem
+//      fileSelectPanel.table.requestFocus()
+    }
+    case AfterStatsActions.ExitTypingTutor() => {
+      // Exit the application.
+      dispose()
     }
   }
 }

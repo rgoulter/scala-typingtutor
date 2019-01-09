@@ -212,14 +212,13 @@ class TypingTutorPanel(text: String, document: Document, tokenMaker: TokenMaker)
         textArea.moveCaretPosition(position + 1)
       }
 
-      if (textArea.getHeight() > 0) {
+      if (textArea.getHeight() > 0 &&
+          isCaretBeyondProportionOfHeight(0.8)) {
         // Can only check Caret position when size is positive.
-        if (isCaretBeyondProportionOfHeight(0.8)) {
-          val rectToView = rectOfCaretPlusProportionOfHeight(0.8)
+        val rectToView = rectOfCaretPlusProportionOfHeight(0.8)
 
-          // UI CHANGE! I hope the effect isn't too sudden.
-          textArea.scrollRectToVisible(rectToView)
-        }
+        // UI CHANGE! I hope the effect isn't too sudden.
+        textArea.scrollRectToVisible(rectToView)
       }
 
       partialTokMak.position = position

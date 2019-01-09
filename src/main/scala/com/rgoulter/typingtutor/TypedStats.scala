@@ -29,7 +29,7 @@ class TypedStats(val numTotal: Int,
   }
 
   val durationInMins: Double =
-    (duration / 1000).toDouble / 60
+    (duration / 1000).toDouble / 60.0
 
   /** String of duration formatted in `mm:ss` string. */
   val durationStr: String =
@@ -45,9 +45,9 @@ class TypedStats(val numTotal: Int,
     *
     * Computed as: `wpm = (# chars / 5) / (time in mins)` (rounded).
     */
-  val wpmStr =
+  val wpmStr: String =
     if (durationInMins > 0)
-      ((numCorrect / 5) / durationInMins).toInt
+      ((numCorrect / 5) / durationInMins).toInt.toString
     else
       "???"
 }
