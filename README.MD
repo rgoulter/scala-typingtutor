@@ -4,10 +4,13 @@
 [![Coverage Status](https://coveralls.io/repos/github/rgoulter/scala-typingtutor/badge.svg?branch=master)](https://coveralls.io/github/rgoulter/scala-typingtutor?branch=master)
 
 A typing tutor inspired by [typing.io](https://typing.io),
-a typing tutor which uses source code for typing practice.
+a typing tutor which uses syntax-highlighted source code for typing practice.
 
-This provides syntax-highlighting for the typing-practice documents,
-like the development environments programmers are used to.
+This project uses
+[RSyntaxTextArea](https://github.com/bobbylight/RSyntaxTextArea) for
+syntax highlighting, and [Sodium FRP](https://github.com/SodiumFRP/sodium).
+
+![](screenshot.png)
 
 ## Building
 
