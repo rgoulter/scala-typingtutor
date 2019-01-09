@@ -13,8 +13,6 @@ import com.rgoulter.typingtutor.FileProgress
 import com.rgoulter.typingtutor.FileProgressEntry
 import com.rgoulter.typingtutor.FileProgressEntry
 
-
-
 object SQLHelper {
   // Connection
   def connectionFor(filename: String): Connection =
@@ -47,41 +45,38 @@ object SQLHelper {
 //  }
 }
 
-
-
 object RawFileProgressDB {
   type Entry = (String, Int)
 }
 
-
-
 class RawFileProgressDB(connection: Connection) {
   import RawFileProgressDB.Entry
 
-  val TableName = "fileoffsets"
+  val TableName    = "fileoffsets"
   val FileColumn   = "file"
   val OffsetColumn = "offset"
 
   val statement = connection.createStatement()
 
-  val CreateTblSql = s"CREATE TABLE IF NOT EXISTS $TableName ($FileColumn TEXT PRIMARY KEY, $OffsetColumn INTEGER)"
+  val CreateTblSql =
+    s"CREATE TABLE IF NOT EXISTS $TableName ($FileColumn TEXT PRIMARY KEY, $OffsetColumn INTEGER)"
   statement.executeUpdate(CreateTblSql)
 
   def addEntry(entry: Entry): Unit = {
     val (path, offset) = entry
-    val Sql = s"INSERT OR REPLACE INTO $TableName VALUES ('$path', $offset)"
+    val Sql            = s"INSERT OR REPLACE INTO $TableName VALUES ('$path', $offset)"
 
     statement.executeUpdate(Sql)
   }
 
   def entries: List[Entry] = {
-    val QuerySql = s"SELECT $FileColumn, $OffsetColumn FROM $TableName"
+    val QuerySql  = s"SELECT $FileColumn, $OffsetColumn FROM $TableName"
     val resultSet = statement.executeQuery(QuerySql)
 
     var res = List[Entry]()
 
     while (resultSet.next()) {
-      val path = resultSet.getString(FileColumn)
+      val path   = resultSet.getString(FileColumn)
       val offset = resultSet.getInt(OffsetColumn)
 
       res = res :+ (path -> offset)
@@ -91,7 +86,8 @@ class RawFileProgressDB(connection: Connection) {
   }
 
   def updateEntry(path: String, newOffset: Int): Unit = {
-    val Sql = s"UPDATE $TableName SET $OffsetColumn = $newOffset WHERE $FileColumn = '$path'"
+    val Sql =
+      s"UPDATE $TableName SET $OffsetColumn = $newOffset WHERE $FileColumn = '$path'"
 
     statement.executeUpdate(Sql)
   }
@@ -102,8 +98,6 @@ class RawFileProgressDB(connection: Connection) {
     statement.executeUpdate(Sql)
   }
 }
-
-
 
 object FileProgressDB {
   import RawFileProgressDB.Entry
@@ -122,8 +116,6 @@ object FileProgressDB {
   }
 }
 
-
-
 /** CRUD class for persisting progress in the files the user practices with.
   * Stores using an SQLite database.
   *
@@ -131,7 +123,7 @@ object FileProgressDB {
   * relative to the source-files directory. (e.g. `./typingtutor/` by default)
   */
 class FileProgressDB(connection: Connection) extends FileProgress {
-  import FileProgressDB.{ fpEntryFromEntry, entryFromFpEntry }
+  import FileProgressDB.{fpEntryFromEntry, entryFromFpEntry}
 
   val rawDB = new RawFileProgressDB(connection)
 

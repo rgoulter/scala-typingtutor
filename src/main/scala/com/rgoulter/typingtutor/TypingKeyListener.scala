@@ -12,28 +12,19 @@ import sodium.CellSink
 import sodium.Stream
 import sodium.StreamSink
 
-
-
 sealed trait TypingEvent
-
-
 
 case class Backspace() extends TypingEvent
 
-
-
 case class TypedCharacter(val c: Char, val time: Long) extends TypingEvent
 
-
-
 object State {
+
   /** Returns a [[State]] with the initial offset of the [[Document]],
     * and `numCorrect`/`numIncorrect` counters reset to `0`. */
   def initialStateOf(doc: Document): State =
     State(0, 0, doc.initialOffset)
 }
-
-
 
 // Position represents the latest correctly typed input.
 // Display in RSTA still adds numIncorrect for highlighting typing
@@ -48,13 +39,10 @@ object State {
   */
 case class State(val numCorrect: Int,
                  val numIncorrect: Int,
-                 val position : Int) {
-}
-
-
+                 val position: Int) {}
 
 class StreamOfKeyListener extends KeyAdapter {
-  private val typedEventsSink = new StreamSink[TypingEvent]
+  private val typedEventsSink          = new StreamSink[TypingEvent]
   val typedEvents: Stream[TypingEvent] = typedEventsSink
 
   override def keyTyped(ke: KeyEvent): Unit = {
@@ -78,124 +66,120 @@ class StreamOfKeyListener extends KeyAdapter {
   }
 }
 
-
-
 // callback: (position, numIncorrect) => ()
-class TypingKeyListener(val text: Cell[Document], typedEvents: Stream[TypingEvent]) {
+class TypingKeyListener(val text: Cell[Document],
+                        typedEvents: Stream[TypingEvent]) {
+
   /** Stream of `(character, time)` values, representing
     *  which keys were pressed at what time.
     */
-  private val typedCharEvents = typedEvents.filter({
-    case TypedCharacter(_, _) => true
-    case _ => false
-  }).map({
-    case TypedCharacter(c, time) => (c, time)
-    case _ => throw new IllegalStateException()
-  })
-
-
+  private val typedCharEvents = typedEvents
+    .filter({
+      case TypedCharacter(_, _) => true
+      case _                    => false
+    })
+    .map({
+      case TypedCharacter(c, time) => (c, time)
+      case _                       => throw new IllegalStateException()
+    })
 
   /** Stream of the [[State]] of the typing tutor.
     *
     * n.b. the [[State]] resets when the document changes.
     */
   val markers = Cell.switchC(text.map { text =>
-    typedEvents.accum[State](State.initialStateOf(text), (te, state) => {
-      te match {
-        case Backspace() => {
-          state match {
-            // Pressed Backspace => Go back a character.
-            case State(numCorrect, 0, position) => { // if numIncorrect == 0
-              // ensure numCorrect >= 0
-              val newNumCorrect = Math.max(0, numCorrect - 1)
+    typedEvents.accum[State](
+      State.initialStateOf(text),
+      (te, state) => {
+        te match {
+          case Backspace() => {
+            state match {
+              // Pressed Backspace => Go back a character.
+              case State(numCorrect, 0, position) => { // if numIncorrect == 0
+                // ensure numCorrect >= 0
+                val newNumCorrect = Math.max(0, numCorrect - 1)
 
-              // Try to find a previous position
-              val newPosition =
-                text.previousTypeableOffset(position).getOrElse(position)
-              State(newNumCorrect, 0, newPosition)
-            }
-            case State(numCorrect, numIncorrect, position) => {
-              val newPosition =
-                text.previousTypeableOffset(position).getOrElse(position)
-              State(numCorrect, numIncorrect - 1, position)
-            }
-          }
-        }
-        case TypedCharacter(typedChar, time) => {
-          state match {
-            case State(numCorrect, 0, position) => { // if numIncorrect == 0
-              val expectedChar = text.charAt(position)
-
-              if (expectedChar == typedChar) {
-                // Correctly typed character.
-                // numCorrect < textSize
-                val newNumCorrect = Math.min(numCorrect + 1, text.size)
+                // Try to find a previous position
                 val newPosition =
-                  text.nextTypeableOffset(position).getOrElse(position)
-
-                // If the position didn't advance,
-                // must be at the end.
-                if (position == newPosition) {
-                  reachedEndSink.send(position + 1)
-                }
-
+                  text.previousTypeableOffset(position).getOrElse(position)
                 State(newNumCorrect, 0, newPosition)
-              } else {
-                // Mis-typed character.
-                // Previously didn't have any incorrect, now we do.
-                State(numCorrect, 1, position)
+              }
+              case State(numCorrect, numIncorrect, position) => {
+                val newPosition =
+                  text.previousTypeableOffset(position).getOrElse(position)
+                State(numCorrect, numIncorrect - 1, position)
               }
             }
-            case State(numCorrect, numIncorrect, position) => {
-              // **MAGIC** MaxIncorrectRule = 5
-              val newNumIncorrect = Math.min(numIncorrect + 1, 5)
-              State(numCorrect, newNumIncorrect, position)
+          }
+          case TypedCharacter(typedChar, time) => {
+            state match {
+              case State(numCorrect, 0, position) => { // if numIncorrect == 0
+                val expectedChar = text.charAt(position)
+
+                if (expectedChar == typedChar) {
+                  // Correctly typed character.
+                  // numCorrect < textSize
+                  val newNumCorrect = Math.min(numCorrect + 1, text.size)
+                  val newPosition =
+                    text.nextTypeableOffset(position).getOrElse(position)
+
+                  // If the position didn't advance,
+                  // must be at the end.
+                  if (position == newPosition) {
+                    reachedEndSink.send(position + 1)
+                  }
+
+                  State(newNumCorrect, 0, newPosition)
+                } else {
+                  // Mis-typed character.
+                  // Previously didn't have any incorrect, now we do.
+                  State(numCorrect, 1, position)
+                }
+              }
+              case State(numCorrect, numIncorrect, position) => {
+                // **MAGIC** MaxIncorrectRule = 5
+                val newNumIncorrect = Math.min(numIncorrect + 1, 5)
+                State(numCorrect, newNumIncorrect, position)
+              }
             }
           }
         }
       }
-    })
+    )
   })
 
-  val numCorrect   = markers.map(_.numCorrect)
+  val numCorrect = markers.map(_.numCorrect)
 
   val numIncorrect = markers.map(_.numIncorrect)
 
   /** Current offset into the document. (Doesn't include `numIncorrect` in this
     * calculation).
     */
-  val currentPos   = markers.map(_.position)
-
-
+  val currentPos = markers.map(_.position)
 
   // totalTypedCt needs to reset after each change to `text` cell.
-  val totalTypedCt = Cell.switchC(text.map(_ => typedEvents.accum[Int](0, (_, n) => n + 1)))
+  val totalTypedCt =
+    Cell.switchC(text.map(_ => typedEvents.accum[Int](0, (_, n) => n + 1)))
 
   val totalTypedIncorrectCt =
     Cell.lift[Int, Int, Int]((total, correct) => total - correct,
                              totalTypedCt,
                              numCorrect)
 
-
-
   val currentChar =
-    Cell.lift((text: Document, idx: Int) => text.charAt(idx),
-              text,
-              currentPos)
+    Cell.lift((text: Document, idx: Int) => text.charAt(idx), text, currentPos)
 
   /** Stream of `(actual char, expected char, time)` values. */
   val keyEntryEvts =
-    typedCharEvents.snapshot(currentChar, { (typedCharEvt, expectedChar: Char) =>
-      val (typedChar, time) = typedCharEvt
-      (expectedChar, typedChar, time)
+    typedCharEvents.snapshot(currentChar, {
+      (typedCharEvt, expectedChar: Char) =>
+        val (typedChar, time) = typedCharEvt
+        (expectedChar, typedChar, time)
     })
 
   val keyEntries: Cell[Array[(Char, Char, Long)]] =
-    Cell.switchC(text.map(_ =>
-      keyEntryEvts.accum(Array(), (tup, acc) => { acc :+ tup })
-    ))
-
-
+    Cell.switchC(
+      text.map(_ => keyEntryEvts.accum(Array(), (tup, acc) => { acc :+ tup })))
 
   private val reachedEndSink = new StreamSink[Int]()
 
@@ -203,14 +187,12 @@ class TypingKeyListener(val text: Cell[Document], typedEvents: Stream[TypingEven
   val reachedEnd: Stream[Int] =
     reachedEndSink
 
-
-
   // Convenience function since Cell.lift only supports up-to 4-ary functions.
   private def mkStats(tup: (Int, Int, Int),
                       entries: Array[(Char, Char, Long)],
                       offsets: (Int, Int)): TypedStats = {
     val (numTypedTotal, numTypedCorrect, numTypedIncorrect) = tup
-    val (initialOffset, finalOffset) = offsets
+    val (initialOffset, finalOffset)                        = offsets
 
     new TypedStats(numTypedTotal,
                    numTypedCorrect,

@@ -6,8 +6,6 @@ import org.fife.ui.rsyntaxtextarea.Token
 import org.fife.ui.rsyntaxtextarea.TokenTypes
 import scala.collection.immutable.TreeMap
 
-
-
 /** Trivial implementation of [[Document]] given a [[String]].
   *
   * All characters in the given text must be typed, (including
@@ -25,14 +23,11 @@ class SimpleDocumentImpl(text: String) extends Document {
     this
 }
 
-
-
 /** Implementation of [[Document]] which skips over e.g. comments, blank lines,
   * etc. using the given `Iterable[Token]`.
   */
-class DocumentImpl(text: String,
-                   tokens: Iterable[Token],
-                   initOffs: Int = 0) extends Document {
+class DocumentImpl(text: String, tokens: Iterable[Token], initOffs: Int = 0)
+    extends Document {
   val expectedChars: TreeMap[Int, Char] = {
     // Ideally, we:
     // - skip comments, (incl. trailing)
@@ -56,15 +51,15 @@ class DocumentImpl(text: String,
     // Reduce tokens down to simplifiedTokens such that at most one
     // whitespace/newline Token occurs between other Tokens.
     // (Tokens for comments are omitted entirely).
-    val init : (Seq[Token], Option[Token]) = (Seq(), None)
-    val (simplifiedTokens,_) = tokens.foldRight(init) ({ (tok, tup) =>
+    val init: (Seq[Token], Option[Token]) = (Seq(), None)
+    val (simplifiedTokens, _) = tokens.foldRight(init)({ (tok, tup) =>
       val (res, skippableTok) = tup
 
       if (tok.isComment()) {
         (res, skippableTok)
       } else if (tok.isWhitespace() ||
-        tok.getType() == TokenTypes.NULL ||
-        text.charAt(tok.getOffset()) == '\r') {
+                 tok.getType() == TokenTypes.NULL ||
+                 text.charAt(tok.getOffset()) == '\r') {
         skippableTok match {
           case Some(wsTok) =>
             (res, Some(dominantSkippableTok(tok, wsTok)))
@@ -83,7 +78,7 @@ class DocumentImpl(text: String,
       }
     })
 
-    simplifiedTokens.foldLeft(new TreeMap[Int,Char]()) { (map, tok) =>
+    simplifiedTokens.foldLeft(new TreeMap[Int, Char]()) { (map, tok) =>
       if (tok.getType() == TokenTypes.NULL) {
         // Token is Newline; expect user to type in '\n'.
         // Offset `map.last._1 + 1` deviates from `tok.getOffset()` in case

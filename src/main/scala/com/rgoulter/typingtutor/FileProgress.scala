@@ -2,14 +2,11 @@ package com.rgoulter.typingtutor
 
 import java.nio.file.Path
 
-
-
 // Path should be relative when storing,
 // Path should be absolute when reading file.
-class FileProgressEntry(val path: Path,
-                        val offset: Int) {
+class FileProgressEntry(val path: Path, val offset: Int) {
   lazy val language: String = {
-    val (lang,_,_) = Utils.languageForFile(path.toFile())
+    val (lang, _, _) = Utils.languageForFile(path.toFile())
     lang
   }
 
@@ -33,7 +30,7 @@ class FileProgressEntry(val path: Path,
 
   /** Reads the contents of the file in the given path. */
   def text: String = {
-    val source = scala.io.Source.fromFile(path.toFile())
+    val source   = scala.io.Source.fromFile(path.toFile())
     val contents = source.mkString
     source.close()
 
@@ -49,8 +46,6 @@ class FileProgressEntry(val path: Path,
     text.length()
   }
 }
-
-
 
 /** CRUD class for persisting progress in the files the user practices with.
   *
@@ -77,7 +72,7 @@ abstract class FileProgress {
     */
   def updateEntries(existingFilesInDir: List[Path]): Unit = {
     val persistedPaths = entries.map(_.path).toSet
-    val onDiskPaths = existingFilesInDir.toSet
+    val onDiskPaths    = existingFilesInDir.toSet
 
     for (p <- onDiskPaths -- persistedPaths) {
       addEntry(new FileProgressEntry(p, 0))

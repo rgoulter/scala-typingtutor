@@ -13,11 +13,9 @@ import org.fife.ui.rsyntaxtextarea.TokenImpl
 import org.fife.ui.rsyntaxtextarea.TokenMaker
 import org.fife.ui.rsyntaxtextarea.TokenTypes
 
-
-
 object PartialTokenMaker {
   val UNTYPED_TOKEN = TokenTypes.DEFAULT_NUM_TOKEN_TYPES + 0;
-  val UntypedStyle = new Style(Color.gray)
+  val UntypedStyle  = new Style(Color.gray)
 
   /** Adds `UntypedStyle` to the [[SyntaxScheme]] of the given
     * [[RSyntaxTextArea]].
@@ -31,8 +29,6 @@ object PartialTokenMaker {
     scheme.setStyles(scheme.getStyles() :+ UntypedStyle)
   }
 }
-
-
 
 /** Provides a "partially syntax-highlighted" effect for `RSyntaxTextArea`.
   * Used to adapt [[TokenMaker]] so that tokens after an offset are instead
@@ -54,16 +50,16 @@ class PartialTokenMaker(tokMak: TokenMaker) extends TokenMaker {
   // How far to keep "dull"
   var position: Int = 0
 
-
-
-  def addToken(array: Array[Char], start: Int, end: Int, tokenType: Int, startOffset: Int): Unit = {
+  def addToken(array: Array[Char],
+               start: Int,
+               end: Int,
+               tokenType: Int,
+               startOffset: Int): Unit = {
     // This one isn't used? Ok then.
     // println("OUR PARTIAL addTOKEN!")
 
     tokMak.addToken(array, start, end, tokenType, startOffset)
   }
-
-
 
   def getTokenList(text: Segment, initTokType: Int, startOffset: Int): Token = {
     val tok = tokMak.getTokenList(text, initTokType, startOffset)
@@ -79,15 +75,25 @@ class PartialTokenMaker(tokMak: TokenMaker) extends TokenMaker {
         val fixedTok = new TokenImpl(tok)
         fixedTok.setNextToken(nextTok)
 
-        val tokOffs = tok.getOffset()
+        val tokOffs    = tok.getOffset()
         val tokEndOffs = tok.getEndOffset()
 
         if (tokEndOffs < position) {
           fixedTok
         } else if (tokOffs < position && tokEndOffs - tokOffs > 1) {
           // Hard case: the caret is in the middle of the word in the middle
-          val headTok = new TokenImpl(text, tokOffs, position - 1, tokOffs, tok.getType(), tok.getLanguageIndex)
-          val tailTok = new TokenImpl(text, position, tokEndOffs - 1, position, PartialTokenMaker.UNTYPED_TOKEN, tok.getLanguageIndex)
+          val headTok = new TokenImpl(text,
+                                      tokOffs,
+                                      position - 1,
+                                      tokOffs,
+                                      tok.getType(),
+                                      tok.getLanguageIndex)
+          val tailTok = new TokenImpl(text,
+                                      position,
+                                      tokEndOffs - 1,
+                                      position,
+                                      PartialTokenMaker.UNTYPED_TOKEN,
+                                      tok.getLanguageIndex)
 
           headTok.setNextToken(tailTok)
           tailTok.setNextToken(nextTok)

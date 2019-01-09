@@ -31,22 +31,19 @@ import sodium.StreamSink
 import com.rgoulter.typingtutor.FileProgress
 import com.rgoulter.typingtutor.FileProgressEntry
 
-
-
-class FileSelectionPanel(sourceFilesDir: File, fileProgress: FileProgress) extends JPanel {
+class FileSelectionPanel(sourceFilesDir: File, fileProgress: FileProgress)
+    extends JPanel {
   // List the existing files from sourceFilesDir.
   private val typingFiles =
     FileUtils.iterateFiles(sourceFilesDir, null, true).asScala.toList
 
   private val relPaths =
-    typingFiles.map(f =>
-      sourceFilesDir.toPath().relativize(f.toPath()))
+    typingFiles.map(f => sourceFilesDir.toPath().relativize(f.toPath()))
 
   // n.b. fileProgress's Paths need to be relative to sourceFilesDir
   fileProgress.updateEntries(relPaths)
 
   private val typingFileEntries = fileProgress.entries
-
 
   private val tableModel = new AbstractTableModel() {
     // Columns: Path, Language
@@ -60,7 +57,7 @@ class FileSelectionPanel(sourceFilesDir: File, fileProgress: FileProgress) exten
       }
 
     override def getColumnClass(c: Int): Class[_] = {
-        getValueAt(0, c).getClass()
+      getValueAt(0, c).getClass()
     }
 
     override def getRowCount(): Int =
@@ -82,17 +79,15 @@ class FileSelectionPanel(sourceFilesDir: File, fileProgress: FileProgress) exten
     }
   }
 
-
-
   // Use a label to explain the inputs.
   // input:
   //   ^O      = show open file dialog
   //   <Enter> = use the selected file
   setLayout(new BorderLayout)
-  private val label = new JLabel("Press Ctrl+O to open file, or <Enter> to use selected file.")
+  private val label = new JLabel(
+    "Press Ctrl+O to open file, or <Enter> to use selected file.")
   label.setHorizontalAlignment(SwingConstants.CENTER)
   add(label, BorderLayout.NORTH)
-
 
   val table = new JTable(tableModel)
 
@@ -113,70 +108,76 @@ class FileSelectionPanel(sourceFilesDir: File, fileProgress: FileProgress) exten
   centerRenderer.setHorizontalAlignment(SwingConstants.CENTER)
   table.getColumnModel().getColumn(1).setCellRenderer(centerRenderer)
 
-
   private val scrollPane = new JScrollPane(table)
   add(scrollPane, BorderLayout.CENTER)
 
-
-
   // TMP: For now, use Option[File], (None to represent Sample),
   // later sample shouldn't be distinguishable from normal files..
-  private val selectedFileSink = new StreamSink[Option[File]]()
+  private val selectedFileSink           = new StreamSink[Option[File]]()
   val selectedFile: Stream[Option[File]] = selectedFileSink
 
-
-
   val SelectItem = "select"
-  val OpenFile = "openfile"
+  val OpenFile   = "openfile"
 
   val enterKS = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
   val ctrlOKS = KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK)
 
-  val tableInputMap = table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+  val tableInputMap =
+    table.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
   tableInputMap.put(enterKS, SelectItem)
   tableInputMap.put(ctrlOKS, OpenFile)
 
-  table.getActionMap().put(SelectItem, new AbstractAction {
-    override def actionPerformed(evt: ActionEvent): Unit = {
-      // Enter => Use selected file.
-      val selectedRow = table.getSelectedRow()
+  table
+    .getActionMap()
+    .put(
+      SelectItem,
+      new AbstractAction {
+        override def actionPerformed(evt: ActionEvent): Unit = {
+          // Enter => Use selected file.
+          val selectedRow = table.getSelectedRow()
 
-      if (selectedRow >= 0) {
-        val selectedModelIdx = table.convertRowIndexToModel(selectedRow)
-        val fileEntry = typingFileEntries(selectedModelIdx)
+          if (selectedRow >= 0) {
+            val selectedModelIdx = table.convertRowIndexToModel(selectedRow)
+            val fileEntry        = typingFileEntries(selectedModelIdx)
 
-        val relPath = fileEntry.path
-        val selectedFile = sourceFilesDir.toPath().resolve(relPath).toFile()
+            val relPath      = fileEntry.path
+            val selectedFile = sourceFilesDir.toPath().resolve(relPath).toFile()
 
-        selectedFileSink.send(Some(selectedFile))
+            selectedFileSink.send(Some(selectedFile))
+          }
+        }
       }
-    }
-  })
+    )
 
   val self = this
-  table.getActionMap().put(OpenFile, new AbstractAction {
-    override def actionPerformed(evt: ActionEvent): Unit = {
-      // Ctrl-O => Open file.
-      val chooser = new JFileChooser()
-      val retVal = chooser.showOpenDialog(self)
+  table
+    .getActionMap()
+    .put(
+      OpenFile,
+      new AbstractAction {
+        override def actionPerformed(evt: ActionEvent): Unit = {
+          // Ctrl-O => Open file.
+          val chooser = new JFileChooser()
+          val retVal  = chooser.showOpenDialog(self)
 
-      if(retVal == JFileChooser.APPROVE_OPTION) {
-        val selectedFile = chooser.getSelectedFile()
+          if (retVal == JFileChooser.APPROVE_OPTION) {
+            val selectedFile = chooser.getSelectedFile()
 
-        // Copy to sourceFilesDir,
-        val destFile = new File(sourceFilesDir, selectedFile.getName())
-        FileUtils.copyFile(selectedFile, destFile)
+            // Copy to sourceFilesDir,
+            val destFile = new File(sourceFilesDir, selectedFile.getName())
+            FileUtils.copyFile(selectedFile, destFile)
 
-        val relPathToFile = sourceFilesDir.toPath().relativize(destFile.toPath())
+            val relPathToFile =
+              sourceFilesDir.toPath().relativize(destFile.toPath())
 
-        // Add to peristence / file progress.
-        fileProgress.addEntry(new FileProgressEntry(relPathToFile, 0))
+            // Add to peristence / file progress.
+            fileProgress.addEntry(new FileProgressEntry(relPathToFile, 0))
 
-        selectedFileSink.send(Some(destFile))
+            selectedFileSink.send(Some(destFile))
+          }
+        }
       }
-    }
-  })
-
+    )
 
   addComponentListener(new ComponentAdapter {
     override def componentShown(evt: ComponentEvent): Unit = {

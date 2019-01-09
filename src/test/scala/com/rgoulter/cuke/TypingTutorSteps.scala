@@ -25,16 +25,13 @@ import com.rgoulter.typingtutor.TypingEvent
 import com.rgoulter.typingtutor.TypingKeyListener
 import com.rgoulter.typingtutor.Utils
 
-
-
 /** Allows SBT to run Cucumber tests with `sbt test`. */
 class CucumberTestSuite extends CucumberSpec
 
-
-
 /** Helper class for the Cucumber step definitions. */
-class TypingKLHelper(val doc: Document,
-                     ks: StreamSink[TypingEvent] = new StreamSink[TypingEvent]())
+class TypingKLHelper(
+    val doc: Document,
+    ks: StreamSink[TypingEvent] = new StreamSink[TypingEvent]())
     extends TypingKeyListener(new Cell(doc), ks) {
   def backspace() {
     ks.send(Backspace())
@@ -46,26 +43,22 @@ class TypingKLHelper(val doc: Document,
   }
 }
 
-
-
 class TypingTutorSteps extends ScalaDsl with EN with Matchers {
-  var partialTokMak : PartialTokenMaker = _
-  var syntaxDoc: RSyntaxDocument = _
-  var typingTutorDoc: Document = _
+  var partialTokMak: PartialTokenMaker  = _
+  var syntaxDoc: RSyntaxDocument        = _
+  var typingTutorDoc: Document          = _
   var typingKeyListener: TypingKLHelper = _
 
-  var initialPosition: Int = _
+  var initialPosition: Int         = _
   var numberOfCharactersInput: Int = Integer.MAX_VALUE
-  var currentPosition: Int = _
-
+  var currentPosition: Int         = _
 
   Before() { scenario =>
     // Called before each scenario.
     // Run any cleanup here.
   }
 
-
-  Given("""^a document to practice typing on$"""){ () =>
+  Given("""^a document to practice typing on$""") { () =>
     // Arbitrary; any kind of document
     val inputText = """hello world this is a plain document
 """
@@ -80,7 +73,7 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     val tokens = Utils.tokenIteratorOf(inputText, tokMak)
     typingTutorDoc = new DocumentImpl(inputText, tokens)
 
-    typingKeyListener = new TypingKLHelper(typingTutorDoc) 
+    typingKeyListener = new TypingKLHelper(typingTutorDoc)
 
     syntaxDoc = new RSyntaxDocument("text/unknown")
     syntaxDoc.setSyntaxStyle(partialTokMak)
@@ -89,8 +82,7 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     initialPosition = typingKeyListener.currentPos.sample()
   }
 
-
-  Given("""^a lexable document to practice typing on$"""){ () =>
+  Given("""^a lexable document to practice typing on$""") { () =>
     // Constraint: Needs to be syntax highlightable; e.g. Java.
     // Constraint: Also, as is implicit elsewhere, needs to have
     //   comments/whitespace which we skip over
@@ -112,7 +104,7 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     val tokens = Utils.tokenIteratorOf(inputText, tokMak)
     typingTutorDoc = new DocumentImpl(inputText, tokens)
 
-    typingKeyListener = new TypingKLHelper(typingTutorDoc) 
+    typingKeyListener = new TypingKLHelper(typingTutorDoc)
 
 //    syntaxDoc = new PartialRSyntaxDocument(typingKeyListener, partialTokMak)
     syntaxDoc = new RSyntaxDocument("text/unknown")
@@ -122,30 +114,30 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     initialPosition = typingKeyListener.currentPos.sample()
   }
 
+  When(
+    """^I input the expected characters, going passed whitespace/comments$""") {
+    () =>
+      // TODO This is fragile
+      // The best fix to this I can consider is, to find some Token(s) after the
+      // initialPosition (where we start typing from) which are comments/whitespace (>1),
+      // and type until the offset is that (counting number of characters pressed).
+      numberOfCharactersInput = 23
 
-  When("""^I input the expected characters, going passed whitespace/comments$"""){ () =>
-    // TODO This is fragile
-    // The best fix to this I can consider is, to find some Token(s) after the
-    // initialPosition (where we start typing from) which are comments/whitespace (>1),
-    // and type until the offset is that (counting number of characters pressed).
-    numberOfCharactersInput = 23
+      for (i <- 1 to numberOfCharactersInput) {
+        val expectedChar = typingKeyListener.currentChar.sample()
+        typingKeyListener.input(expectedChar)
+      }
 
-    for (i <- 1 to numberOfCharactersInput) {
-      val expectedChar = typingKeyListener.currentChar.sample()
-      typingKeyListener.input(expectedChar)
-    }
-
-    // Update position of PartialTokenMaker
-    currentPosition = typingKeyListener.currentPos.sample()
-    partialTokMak.position = currentPosition
+      // Update position of PartialTokenMaker
+      currentPosition = typingKeyListener.currentPos.sample()
+      partialTokMak.position = currentPosition
   }
-
 
   // XXX This is very similar to "I type in the expected characters";
   //   More than code dup; inconsistent terminology is the problem.
   //   What do we input? Keys or characters?
   //   We press keys, input characters!
-  When("""^I input the correct characters$"""){ () =>
+  When("""^I input the correct characters$""") { () =>
     // Must be less than the document length
     numberOfCharactersInput = 3
 
@@ -159,15 +151,14 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     partialTokMak.position = currentPosition
   }
 
-
-  When("""^I input several incorrect characters$"""){ () =>
+  When("""^I input several incorrect characters$""") { () =>
     // Can only type up-to 5 incorrect chars before
     // things are ignored.
     // But, scenario gives no constraints, so.
     val numCharsToType = 3
 
     for (i <- 1 to numCharsToType) {
-      val expectedChar = typingKeyListener.currentChar.sample()
+      val expectedChar  = typingKeyListener.currentChar.sample()
       val incorrectChar = if (expectedChar == 'x') 'y' else 'x'
       typingKeyListener.input(incorrectChar)
     }
@@ -175,8 +166,7 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     currentPosition = typingKeyListener.currentPos.sample()
   }
 
-
-  Then("""^the marker should advance$"""){ () =>
+  Then("""^the marker should advance$""") { () =>
     // TODO Here we don't specify how much it advances by!
     //   Specifically, what we want is each time it advances,
     //   it should advance by at least 1.
@@ -187,19 +177,18 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     assert(currentPosition > initialPosition)
   }
 
+  Then(
+    """^the marker should indicate that incorrect characters have been input$""") {
+    () =>
+      val currentNumIncorrect = typingKeyListener.markers.sample().numIncorrect
 
-  Then("""^the marker should indicate that incorrect characters have been input$"""){ () =>
-    val currentNumIncorrect = typingKeyListener.markers.sample().numIncorrect
-
-    assert(currentNumIncorrect > 0)
+      assert(currentNumIncorrect > 0)
   }
 
-
-  Then("""^it should skip over comments and extra whitespace$"""){ () =>
+  Then("""^it should skip over comments and extra whitespace$""") { () =>
     val positionDifference = currentPosition - initialPosition
     assert(positionDifference > numberOfCharactersInput)
   }
-
 
   // I was running into trouble in the GUI with RSyntaxTextArea because the
   // RSyntaxDocument would cache a line of Tokens, so as the
@@ -208,8 +197,7 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
   // (e.g. called by modelToView, when caret position is changed),
   // the tokens used to paint would be 'stale'.
 
-
-  Then("""^the document should be highlighted up to this point$"""){ () =>
+  Then("""^the document should be highlighted up to this point$""") { () =>
     // Check tokens in doc. after offset are not Unstyled.
     import PartialTokenMaker.UNTYPED_TOKEN
 
@@ -223,8 +211,7 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
     }
   }
 
-
-  Then("""^the document should not highlighted further than this$"""){ () =>
+  Then("""^the document should not highlighted further than this$""") { () =>
     // Check tokens in doc. after offset are Unstyled.
     import PartialTokenMaker.UNTYPED_TOKEN
 
@@ -240,8 +227,6 @@ class TypingTutorSteps extends ScalaDsl with EN with Matchers {
       }
     }
   }
-
-
 //  Then("""^the user interface should reflect this$"""){ () =>
 //    // AFAICT, just check state of Cursor, & that RSynTA or so has this?
 //

@@ -3,18 +3,17 @@ package com.rgoulter.typingtutor
 import scala.collection.immutable.SortedMap
 import scala.collection.immutable.SortedSet
 
-
-
 /**
- * Abstraction used by [[TypingKeyListener]] for what keys
- * the typing tutor is expecting.
- *
- * Since the typing tutor wants to skip over e.g. blank lines, comments,
- * not all parts of the document presented to the user need to be typed.
- * The offsets of the parts which do need to be typed (and the characters
- * expected to be typed at those offsets) are represented by this class.
- */
+  * Abstraction used by [[TypingKeyListener]] for what keys
+  * the typing tutor is expecting.
+  *
+  * Since the typing tutor wants to skip over e.g. blank lines, comments,
+  * not all parts of the document presented to the user need to be typed.
+  * The offsets of the parts which do need to be typed (and the characters
+  * expected to be typed at those offsets) are represented by this class.
+  */
 abstract class Document {
+
   /** Character in the document at a particular index/offset. */
   def charAt(offset: Int): Char =
     expectedChars(offset)

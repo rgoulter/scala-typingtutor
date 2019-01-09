@@ -35,19 +35,18 @@ import com.rgoulter.typingtutor.PartialTokenMaker
 import com.rgoulter.typingtutor.StreamOfKeyListener
 import com.rgoulter.typingtutor.TypingKeyListener
 
-
-
 /** Manages the `TextArea` with the typing tutor. */
-class TypingTutorPanel(text: String,
-                       document: Document,
-                       tokenMaker: TokenMaker) extends JPanel {
+class TypingTutorPanel(text: String, document: Document, tokenMaker: TokenMaker)
+    extends JPanel {
   val textArea = new RSyntaxTextArea(25, 100)
 
   val scrollPane = new RTextScrollPane(textArea)
   // Never show scrollbars;
   // at the moment this is slightly a bad idea, since we don't particularly wrap text.
-  scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
-  scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER)
+  scrollPane.setHorizontalScrollBarPolicy(
+    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
+  scrollPane.setVerticalScrollBarPolicy(
+    ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER)
   scrollPane.setWheelScrollingEnabled(false)
 
   PartialTokenMaker.augmentStyleOfTextArea(textArea)
@@ -59,7 +58,7 @@ class TypingTutorPanel(text: String,
   textArea.getCaret().setVisible(true)
   textArea.getCaret().setBlinkRate(0)
 
-  for(ml <- textArea.getMouseListeners)
+  for (ml <- textArea.getMouseListeners)
     textArea.removeMouseListener(ml)
 
   textArea.setCaretPosition(0)
@@ -74,12 +73,12 @@ class TypingTutorPanel(text: String,
     }
   }
   clearInputMap(textArea.getInputMap(JComponent.WHEN_FOCUSED))
-  clearInputMap(scrollPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT))
-
+  clearInputMap(
+    scrollPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT))
 
   val QuitSessionItem = "quitsession"
 
-  val escKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)
+  val escKeyStroke  = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)
   val panelInputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
   panelInputMap.put(escKeyStroke, QuitSessionItem)
 
@@ -89,7 +88,6 @@ class TypingTutorPanel(text: String,
       pressedEscSink.send(())
     }
   })
-
 
   // Forces RSyntaxDocument to invalidate its cache for the tokenList of the
   // line the caret is on.
@@ -112,7 +110,6 @@ class TypingTutorPanel(text: String,
 
   updateText(text, document.initialOffset)
 
-
   val syntaxDoc = textArea.getDocument().asInstanceOf[RSyntaxDocument];
 
   // I don't like the idea of a mutable variable;
@@ -121,17 +118,17 @@ class TypingTutorPanel(text: String,
   var partialTokMak = new PartialTokenMaker(tokenMaker)
   syntaxDoc.setSyntaxStyle(partialTokMak)
 
-
-  private val textCell = new CellSink[Document](document)
+  private val textCell      = new CellSink[Document](document)
   private val typedEventsKL = new StreamOfKeyListener()
-  val typeTutorKL = new TypingKeyListener(textCell, typedEventsKL.typedEvents)
+  val typeTutorKL           = new TypingKeyListener(textCell, typedEventsKL.typedEvents)
 
   def linesInView(): Option[(Int, Int)] = {
     val viewRect = scrollPane.getViewport().getViewRect()
 
     val topLeftPt = viewRect.getLocation()
-    val bottomRightPt = new Point(topLeftPt.getX().toInt + viewRect.getWidth.toInt,
-                                  topLeftPt.getY().toInt + viewRect.getHeight.toInt)
+    val bottomRightPt = new Point(
+      topLeftPt.getX().toInt + viewRect.getWidth.toInt,
+      topLeftPt.getY().toInt + viewRect.getHeight.toInt)
 
     // The main limitation of this computation is,
     // if even *1 pixel* of lineX is on screen, then lineX
@@ -149,7 +146,6 @@ class TypingTutorPanel(text: String,
     }
   }
 
-
   // n.b. important that this TypingKeyListener gets added after the other KeyListeners,
   // which intercept keystrokes which need to be ignored.
   textArea.addKeyListener(typedEventsKL)
@@ -163,7 +159,8 @@ class TypingTutorPanel(text: String,
   })
 
   def caretYInViewport: Int = {
-    val caretYInTextArea = textArea.modelToView(textArea.getCaretPosition()).getY()
+    val caretYInTextArea =
+      textArea.modelToView(textArea.getCaretPosition()).getY()
     val scrollPaneY = scrollPane.getViewport().getViewPosition().getY()
 
     (caretYInTextArea - scrollPaneY).toInt
@@ -180,50 +177,55 @@ class TypingTutorPanel(text: String,
   // Of ScrollPane's height.
   def rectOfCaretPlusProportionOfHeight(prop: Double): Rectangle = {
     assert(0 <= prop && prop <= 1)
-    val padY = (1 - prop) * scrollPane.getViewport().getHeight()
+    val padY   = (1 - prop) * scrollPane.getViewport().getHeight()
     val height = prop * scrollPane.getViewport().getHeight()
     val caretY = textArea.modelToView(textArea.getCaretPosition()).getY()
 
-    new Rectangle(0, caretY.toInt - padY.toInt, textArea.getWidth(), (caretY + height).toInt)
+    new Rectangle(0,
+                  caretY.toInt - padY.toInt,
+                  textArea.getWidth(),
+                  (caretY + height).toInt)
   }
 
   // n.b. it's important that a reference to this `listener` is retained,
   // or else the listener's callback won't be executed.
-  private val listener = typeTutorKL.markers.value().listen(state => {
-    import state.numIncorrect
-    import state.position
+  private val listener = typeTutorKL.markers
+    .value()
+    .listen(state => {
+      import state.numIncorrect
+      import state.position
 
-    val caretColor =
+      val caretColor =
+        if (numIncorrect == 0) {
+          Color.green
+        } else {
+          Color.red
+        }
+
+      textArea.setCaretColor(caretColor)
+      textArea.setSelectionColor(caretColor)
+
       if (numIncorrect == 0) {
-        Color.green
+        textArea.setCaretPosition(position)
       } else {
-        Color.red
+        textArea.setCaretPosition(position + numIncorrect)
+        textArea.moveCaretPosition(position + 1)
       }
 
-    textArea.setCaretColor(caretColor)
-    textArea.setSelectionColor(caretColor)
+      if (textArea.getHeight() > 0) {
+        // Can only check Caret position when size is positive.
+        if (isCaretBeyondProportionOfHeight(0.8)) {
+          val rectToView = rectOfCaretPlusProportionOfHeight(0.8)
 
-    if (numIncorrect == 0) {
-      textArea.setCaretPosition(position)
-    } else {
-      textArea.setCaretPosition(position + numIncorrect)
-      textArea.moveCaretPosition(position + 1)
-    }
-
-    if (textArea.getHeight() > 0) {
-      // Can only check Caret position when size is positive.
-      if (isCaretBeyondProportionOfHeight(0.8)) {
-        val rectToView = rectOfCaretPlusProportionOfHeight(0.8)
-
-        // UI CHANGE! I hope the effect isn't too sudden.
-        textArea.scrollRectToVisible(rectToView)
+          // UI CHANGE! I hope the effect isn't too sudden.
+          textArea.scrollRectToVisible(rectToView)
+        }
       }
-    }
 
-    partialTokMak.position = position
+      partialTokMak.position = position
 
-    forceRefresh()
-  })
+      forceRefresh()
+    })
 
   def setDocument(text: String, doc: Document, tokMak: TokenMaker): Unit = {
     partialTokMak = new PartialTokenMaker(tokMak)
@@ -244,24 +246,23 @@ class TypingTutorPanel(text: String,
     textCell.send(newDoc)
   }
 
-
   private val pressedEscSink = new StreamSink[Unit]()
 
   /** The offset when endgame is emitted. */
   val finishingOffset =
-    typeTutorKL.reachedEnd.merge(pressedEscSink.snapshot(typeTutorKL.currentPos),
-                                 { (l, r) => l })
+    typeTutorKL.reachedEnd
+      .merge(pressedEscSink.snapshot(typeTutorKL.currentPos), { (l, r) =>
+        l
+      })
 
   /** Stats, emitted only at the end of the game/lesson. */
   val statsStream = finishingOffset.snapshot(typeTutorKL.stats)
-
 
   addComponentListener(new ComponentAdapter {
     override def componentShown(evt: ComponentEvent): Unit = {
       textArea.requestFocusInWindow()
     }
   })
-
 
   setLayout(new BorderLayout())
   add(scrollPane)

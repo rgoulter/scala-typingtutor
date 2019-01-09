@@ -1,7 +1,5 @@
 package com.rgoulter.typingtutor
 
-
-
 /** For representing the typing statistics of a session. */
 class TypedStats(val numTotal: Int,
                  val numCorrect: Int,
@@ -9,6 +7,7 @@ class TypedStats(val numTotal: Int,
                  val entries: Array[(Char, Char, Long)],
                  val initialOffset: Int,
                  val finalOffset: Int) {
+
   /** Prints stats to stdout. */
   def print(): Unit = {
     println(s"Total: $numTotal")

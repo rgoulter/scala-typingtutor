@@ -8,5 +8,4 @@ import com.rgoulter.typingtutor.SimpleDocumentImpl
 import javax.swing.JTextField
 
 /** Unit Tests, particularly for regressions. */
-class GUISpec extends FlatSpec {
-}
+class GUISpec extends FlatSpec {}
