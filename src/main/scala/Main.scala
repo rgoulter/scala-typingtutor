@@ -3,7 +3,11 @@ import java.awt.CardLayout
 import java.awt.Component
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.WindowEvent
+import java.awt.event.WindowAdapter
 import java.io.File
+
+import java.sql.SQLException
 
 import javax.swing.JFrame
 import javax.swing.JPanel
@@ -32,6 +36,16 @@ class TypingTutFrame extends JFrame("Typing Tutor") {
   val DBName       = "typingtutor.db"
   val dbConn       = SQLHelper.connectionFor(DBName)
   val fileProgress = new FileProgressDB(dbConn)
+
+  addWindowListener(new WindowAdapter {
+    override def windowClosing(e: WindowEvent): Unit =
+      try {
+        dbConn.close()
+      } catch {
+        // connection close failed.
+        case e: SQLException => System.err.println(e);
+      }
+  })
 
   val FileSelectCard  = "select"
   val TypingTutorCard = "typing"

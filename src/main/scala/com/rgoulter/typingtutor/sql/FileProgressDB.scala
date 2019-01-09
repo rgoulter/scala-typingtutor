@@ -15,8 +15,10 @@ import com.rgoulter.typingtutor.FileProgressEntry
 
 object SQLHelper {
   // Connection
-  def connectionFor(filename: String): Connection =
+  def connectionFor(filename: String): Connection = {
+    Class.forName("org.sqlite.JDBC")
     DriverManager.getConnection(s"jdbc:sqlite:$filename")
+  }
 
 //  def withConnectionTo[T](filename: String)(f: Connection => T): Option[T] = {
 //    var conn : Connection = null
