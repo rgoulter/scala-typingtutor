@@ -2,29 +2,15 @@ package com.rgoulter
 
 import scala.collection.JavaConverters.asScalaIteratorConverter
 
-import cucumber.api.scala.{ScalaDsl, EN}
-import cucumber.api.PendingException
-
-import com.waioeka.sbt.runner.CucumberSpec
-
 import org.fife.ui.rsyntaxtextarea.RSyntaxDocument
 import org.fife.ui.rsyntaxtextarea.modes.JavaTokenMaker
-import org.fife.ui.rsyntaxtextarea.modes.PlainTextTokenMaker
 
 import org.scalatest.FeatureSpec
 import org.scalatest.GivenWhenThen
 import org.scalatest.Matchers
 
-import sodium.Cell
-import sodium.StreamSink
-
-import com.rgoulter.typingtutor.Backspace
-import com.rgoulter.typingtutor.Document
 import com.rgoulter.typingtutor.DocumentImpl
 import com.rgoulter.typingtutor.PartialTokenMaker
-import com.rgoulter.typingtutor.TypedCharacter
-import com.rgoulter.typingtutor.TypingEvent
-import com.rgoulter.typingtutor.TypingKeyListener
 import com.rgoulter.typingtutor.Utils
 
 class SyntaxHighlightingSpec extends FeatureSpec with GivenWhenThen {
