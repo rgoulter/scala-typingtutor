@@ -39,6 +39,7 @@ import com.rgoulter.typingtutor.TypingKeyListener
 class TypingTutorPanel(text: String, document: Document, tokenMaker: TokenMaker)
     extends JPanel {
   val textArea = new RSyntaxTextArea(25, 100)
+  textArea.setName("tutor_text_area")
 
   val scrollPane = new RTextScrollPane(textArea)
   // Never show scrollbars;

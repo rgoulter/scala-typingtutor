@@ -90,6 +90,7 @@ class FileSelectionPanel(sourceFilesDir: File, fileProgress: FileProgress)
   add(label, BorderLayout.NORTH)
 
   val table = new JTable(tableModel)
+  table.setName("file_selection_table")
 
   table.setCellSelectionEnabled(false)
   table.setRowSelectionAllowed(true)
