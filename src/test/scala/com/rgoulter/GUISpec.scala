@@ -22,6 +22,8 @@ import org.scalatest.FeatureSpec
 import org.scalatest.GivenWhenThen
 import org.scalatest.Matchers
 
+import com.rgoulter.tag.GUITest
+
 import com.rgoulter.typingtutor.gui.TypingTutorFrame
 import com.rgoulter.typingtutor.gui.TypingTutorPanel
 import com.rgoulter.typingtutor.SimpleDocumentImpl
@@ -33,7 +35,7 @@ import com.rgoulter.typingtutor.Utils
 /** Unit Tests, particularly for regressions. */
 class GUISpec extends FeatureSpec with GivenWhenThen {
   feature("Typing Tutor Frame Session") {
-    scenario("Happy path with the sample document") {
+    scenario("Happy path with the sample document", GUITest) {
       // SMELL: 2019-01: this just assumes the sample document is the first!
 
       Given("the user has opened the Typing Tutor application")
