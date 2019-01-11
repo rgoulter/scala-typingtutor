@@ -29,10 +29,10 @@ import com.rgoulter.typingtutor.Utils
 
 class SyntaxHighlightingSpec extends FeatureSpec with GivenWhenThen {
 
-  info("As a ...")
-  info("I want ...")
-  info("So I can ...")
-  info("And ...")
+  info("As a developer who uses syntax highlighting")
+  info("I want a typing tutor which uses syntax highlighting")
+  info("So I can practice typing in a familiar environment")
+  info("And have visual feedback about typing progress")
 
   feature("Syntax Highlighting") {
     // 2016: regression:

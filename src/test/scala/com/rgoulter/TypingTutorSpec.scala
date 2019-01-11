@@ -29,9 +29,9 @@ import com.rgoulter.typingtutor.Utils
 
 class TypingTutorSpec extends FeatureSpec with GivenWhenThen {
 
-  info("As a ...")
-  info("I want ...")
-  info("So I can ...")
+  info("As a person who types in code using the keyboard")
+  info("I want a typing tutor which accepts only correct input")
+  info("So I can practice disciplined typing")
 
   feature("Typing Tutor") {
     // SMELL: 2019-01: this is a bad scenario title
