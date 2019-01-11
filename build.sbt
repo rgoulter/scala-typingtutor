@@ -22,7 +22,8 @@ libraryDependencies += "sodium" % "sodium_2.11" % "1.0" withSources () withJavad
 libraryDependencies += "org.xerial" % "sqlite-jdbc" % "3.8.11.2"
 
 libraryDependencies ++= Seq(
-  "org.scalatest"   %% "scalatest"       % "2.2.4" % "test"
+  "org.scalatest"   %% "scalatest"       % "2.2.4" % "test",
+  "org.assertj" % "assertj-swing-junit" % "3.8.0" % "test"
 )
 
 addCompilerPlugin("org.psywerx.hairyfotr" %% "linter" % "0.1.17")
