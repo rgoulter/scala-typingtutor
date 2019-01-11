@@ -38,7 +38,7 @@ also be invoked from the command line with tasks such as:
 * compiling can be done using `sbt compile`; the program can be run using
   `sbt run`.
 
-* tests can be run with `sbt cucumber`.
+* tests can be run with `sbt test`.
 
 * a JAR can be produced using `sbt packageBin`.
 
