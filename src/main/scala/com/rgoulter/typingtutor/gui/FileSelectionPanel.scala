@@ -25,8 +25,8 @@ import scala.collection.JavaConverters.asScalaIteratorConverter
 
 import org.apache.commons.io.FileUtils
 
-import sodium.Stream
-import sodium.StreamSink
+import sodium.Cell
+import sodium.CellSink
 
 import com.rgoulter.typingtutor.FileProgress
 import com.rgoulter.typingtutor.FileProgressEntry
@@ -114,8 +114,8 @@ class FileSelectionPanel(sourceFilesDir: File, fileProgress: FileProgress)
 
   // TMP: For now, use Option[File], (None to represent Sample),
   // later sample shouldn't be distinguishable from normal files..
-  private val selectedFileSink           = new StreamSink[Option[File]]()
-  val selectedFile: Stream[Option[File]] = selectedFileSink
+  private val selectedFileSink         = new CellSink[Option[File]](None)
+  val selectedFile: Cell[Option[File]] = selectedFileSink
 
   val SelectItem = "select"
   val OpenFile   = "openfile"
