@@ -64,15 +64,16 @@ System.out.println("Hello World!");
 """)
 
       Then("the user should be shown the results panel")
-      window.textBox(new GenericTypeMatcher[JTextComponent](classOf[JTextComponent]) {
-        def isMatching(textBox: JTextComponent): Boolean =
-          textBox.getName() == "tutor_text_area" &&
-          !textBox.isShowing()
-      })
+      window.textBox(
+        new GenericTypeMatcher[JTextComponent](classOf[JTextComponent]) {
+          def isMatching(textBox: JTextComponent): Boolean =
+            textBox.getName() == "tutor_text_area" &&
+              !textBox.isShowing()
+        })
       window.panel(new GenericTypeMatcher[JPanel](classOf[JPanel]) {
         def isMatching(panel: JPanel): Boolean =
           panel.getName() == "typing_tutor_stats" &&
-          panel.isShowing()
+            panel.isShowing()
       })
     }
   }

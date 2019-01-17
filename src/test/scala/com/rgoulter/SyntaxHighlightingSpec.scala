@@ -44,13 +44,13 @@ class SyntaxHighlightingSpec extends FeatureSpec with GivenWhenThen {
 """
       val inputLang = "java"
 
-      val tokMak = new JavaTokenMaker()
+      val tokMak        = new JavaTokenMaker()
       val partialTokMak = new PartialTokenMaker(tokMak)
 
       // NOTE: we use tokMak for making DocumentImpl,
       // since we want *full* sequence tokens in DocumentImpl
       // for deciding which parts of inputText are comments/skippable.
-      val tokens = Utils.tokenIteratorOf(inputText, tokMak)
+      val tokens         = Utils.tokenIteratorOf(inputText, tokMak)
       val typingTutorDoc = new DocumentImpl(inputText, tokens, tokMak)
 
       val typingKeyListener = new TypingKLHelper(typingTutorDoc)
@@ -128,13 +128,13 @@ class SyntaxHighlightingSpec extends FeatureSpec with GivenWhenThen {
 """
       val inputLang = "java"
 
-      val tokMak = new JavaTokenMaker()
+      val tokMak        = new JavaTokenMaker()
       val partialTokMak = new PartialTokenMaker(tokMak)
 
       // NOTE: we use tokMak for making DocumentImpl,
       // since we want *full* sequence tokens in DocumentImpl
       // for deciding which parts of inputText are comments/skippable.
-      val tokens = Utils.tokenIteratorOf(inputText, tokMak)
+      val tokens         = Utils.tokenIteratorOf(inputText, tokMak)
       val typingTutorDoc = new DocumentImpl(inputText, tokens, tokMak)
 
       val typingKeyListener = new TypingKLHelper(typingTutorDoc)

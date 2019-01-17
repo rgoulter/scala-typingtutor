@@ -162,12 +162,10 @@ class TypingKeyListener(val text: Cell[Document],
     Cell.switchC(text.map(_ => typedEvents.accum[Int](0, (_, n) => n + 1)))
 
   val totalTypedIncorrectCt =
-    Cell.lift[Int, Int, Int]((total, correct) => total - correct,
-                             totalTypedCt,
-                             numCorrect)
+    totalTypedCt.lift(numCorrect, (total, correct: Int) => total - correct)
 
   val currentChar =
-    Cell.lift((text: Document, idx: Int) => text.charAt(idx), text, currentPos)
+    text.lift(currentPos, (text: Document, idx: Int) => text.charAt(idx))
 
   /** Stream of `(actual char, expected char, time)` values. */
   val keyEntryEvts =
@@ -203,14 +201,18 @@ class TypingKeyListener(val text: Cell[Document],
   }
 
   private val numTypedTuple =
-    Cell.lift((x: Int, y: Int, z: Int) => (x, y, z),
-              totalTypedCt,
-              numCorrect,
-              totalTypedIncorrectCt)
+    totalTypedCt.lift(
+      numCorrect,
+      totalTypedIncorrectCt,
+      (x: Int, y: Int, z: Int) => (x, y, z)
+    )
   private val offsets =
-    Cell.lift((initOffs: Int, finalOffs: Int) => (initOffs, finalOffs),
-              text.map(_.initialOffset),
-              currentPos)
+    text
+      .map(_.initialOffset)
+      .lift(
+        currentPos,
+        (initOffs: Int, finalOffs: Int) => (initOffs, finalOffs)
+      )
   val stats: Cell[TypedStats] =
-    Cell.lift(mkStats, numTypedTuple, keyEntries, offsets)
+    numTypedTuple.lift(keyEntries, offsets, mkStats)
 }
