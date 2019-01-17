@@ -11,11 +11,11 @@ lazy val tutor = (project in file("."))
   )
   .dependsOn(root)
 
-libraryDependencies += "com.fifesoft" % "rsyntaxtextarea" % "2.5.8" withSources () withJavadoc ()
+libraryDependencies += "com.fifesoft" % "rsyntaxtextarea" % "3.0.2" withSources () withJavadoc ()
 
-libraryDependencies += "org.apache.directory.studio" % "org.apache.commons.io" % "2.4"
+libraryDependencies += "org.apache.directory.studio" % "org.apache.commons.io" % "2.6"
 
-libraryDependencies += "org.xerial" % "sqlite-jdbc" % "3.8.11.2"
+libraryDependencies += "org.xerial" % "sqlite-jdbc" % "3.25.2"
 
 libraryDependencies ++= Seq(
   "org.scalatest"   %% "scalatest"       % "3.0.4" % "test",
