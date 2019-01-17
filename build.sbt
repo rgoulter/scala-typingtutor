@@ -13,7 +13,7 @@ lazy val tutor = (project in file("."))
 
 libraryDependencies += "com.fifesoft" % "rsyntaxtextarea" % "3.0.2" withSources () withJavadoc ()
 
-libraryDependencies += "org.apache.directory.studio" % "org.apache.commons.io" % "2.6"
+libraryDependencies += "commons-io" % "commons-io" % "2.6"
 
 libraryDependencies += "org.xerial" % "sqlite-jdbc" % "3.25.2"
 
