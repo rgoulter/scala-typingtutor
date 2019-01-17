@@ -37,7 +37,7 @@ class TypingTutorSpec extends FeatureSpec with GivenWhenThen {
       // since we want *full* sequence tokens in DocumentImpl
       // for deciding which parts of inputText are comments/skippable.
       val tokens = Utils.tokenIteratorOf(inputText, tokMak)
-      val typingTutorDoc = new DocumentImpl(inputText, tokens)
+      val typingTutorDoc = new DocumentImpl(inputText, tokens, tokMak)
 
       val typingKeyListener = new TypingKLHelper(typingTutorDoc)
 
@@ -87,7 +87,7 @@ class TypingTutorSpec extends FeatureSpec with GivenWhenThen {
       // since we want *full* sequence tokens in DocumentImpl
       // for deciding which parts of inputText are comments/skippable.
       val tokens = Utils.tokenIteratorOf(inputText, tokMak)
-      val typingTutorDoc = new DocumentImpl(inputText, tokens)
+      val typingTutorDoc = new DocumentImpl(inputText, tokens, tokMak)
 
       val typingKeyListener = new TypingKLHelper(typingTutorDoc)
 

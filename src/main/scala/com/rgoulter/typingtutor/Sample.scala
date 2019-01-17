@@ -28,8 +28,11 @@ object Sample {
   val SampleTextTokMak = new JavaTokenMaker()
 
   val SampleDocument =
-    new DocumentImpl(SampleText,
-                     Utils.tokenIteratorOf(SampleText, SampleTextTokMak))
+    new DocumentImpl(
+      SampleText,
+      Utils.tokenIteratorOf(SampleText, SampleTextTokMak),
+      SampleTextTokMak
+    )
 
   // dir should be e.g. $APPDIR/typingtutor,
   // and so this writes to e.g. $APPDIR/typingtutor/sample/Hello.java

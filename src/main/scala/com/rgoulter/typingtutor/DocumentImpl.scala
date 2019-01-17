@@ -2,9 +2,12 @@ package com.rgoulter.typingtutor
 
 import scala.collection.immutable.BitSet
 import scala.collection.immutable.SortedSet
-import org.fife.ui.rsyntaxtextarea.Token
-import org.fife.ui.rsyntaxtextarea.TokenTypes
 import scala.collection.immutable.TreeMap
+
+import org.fife.ui.rsyntaxtextarea.Token
+import org.fife.ui.rsyntaxtextarea.TokenMaker
+import org.fife.ui.rsyntaxtextarea.TokenTypes
+import org.fife.ui.rsyntaxtextarea.modes._
 
 /** Trivial implementation of [[Document]] given a [[String]].
   *
@@ -12,6 +15,11 @@ import scala.collection.immutable.TreeMap
   * blank lines, comments).
   */
 class SimpleDocumentImpl(text: String) extends Document {
+  override def text(): String = text
+
+  override def tokenMaker(): TokenMaker =
+    new PlainTextTokenMaker()
+
   val expectedChars: TreeMap[Int, Char] = {
     // whole range is typeable.
     val pairs = Range(0, text.length()).toList.zip(text)
@@ -26,8 +34,16 @@ class SimpleDocumentImpl(text: String) extends Document {
 /** Implementation of [[Document]] which skips over e.g. comments, blank lines,
   * etc. using the given `Iterable[Token]`.
   */
-class DocumentImpl(text: String, tokens: Iterable[Token], initOffs: Int = 0)
-    extends Document {
+class DocumentImpl(
+    text: String,
+    tokens: Iterable[Token],
+    tokenMaker: TokenMaker,
+    initOffs: Int = 0
+) extends Document {
+  override def text(): String = text
+
+  override def tokenMaker(): TokenMaker = tokenMaker
+
   val expectedChars: TreeMap[Int, Char] = {
     // Ideally, we:
     // - skip comments, (incl. trailing)
@@ -107,6 +123,6 @@ class DocumentImpl(text: String, tokens: Iterable[Token], initOffs: Int = 0)
   }
 
   def withInitialOffset(newInitialOffset: Int): Document = {
-    new DocumentImpl(text, tokens, newInitialOffset)
+    new DocumentImpl(text, tokens, tokenMaker, newInitialOffset)
   }
 }

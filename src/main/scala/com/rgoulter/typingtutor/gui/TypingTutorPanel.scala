@@ -27,7 +27,7 @@ import org.fife.ui.rsyntaxtextarea.TokenMaker
 import org.fife.ui.rsyntaxtextarea.RSyntaxDocument
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea
 
-import sodium.CellSink
+import sodium.Cell
 import sodium.StreamSink
 
 import com.rgoulter.typingtutor.Document
@@ -36,8 +36,7 @@ import com.rgoulter.typingtutor.StreamOfKeyListener
 import com.rgoulter.typingtutor.TypingKeyListener
 
 /** Manages the `TextArea` with the typing tutor. */
-class TypingTutorPanel(text: String, document: Document, tokenMaker: TokenMaker)
-    extends JPanel {
+class TypingTutorPanel(documentC: Cell[Document]) extends JPanel {
   val textArea = new RSyntaxTextArea(25, 100)
   textArea.setName("tutor_text_area")
 
@@ -102,26 +101,26 @@ class TypingTutorPanel(text: String, document: Document, tokenMaker: TokenMaker)
     syntaxDoc.getTokenListForLine(caretLine + 1)
   }
 
-  // Every time we set the text..
-  def updateText(text: String, initPos: Int = 0): Unit = {
-    textArea.setText(text)
-    textArea.setCaretPosition(initPos)
+  val syntaxDoc = textArea.getDocument().asInstanceOf[RSyntaxDocument];
+  // SMELL: 2016: I don't like the idea of a mutable variable;
+  // Maybe with appropriate signals/etc. in an FRP system,
+  // could attach partialTokMak to listen to TypKL's cursor pos.
+  var partialTokMak: PartialTokenMaker = _;
+
+  private def updateText(document: Document): Unit = {
+    partialTokMak = new PartialTokenMaker(document.tokenMaker)
+    syntaxDoc.setSyntaxStyle(partialTokMak) /// XXX KLUDGE; here and in setDoc
+
+    textArea.setText(document.text)
+    textArea.setCaretPosition(document.initialOffset)
     textArea.getCaret().setVisible(true)
   }
 
-  updateText(text, document.initialOffset)
+  updateText(documentC.sample())
+  documentC.updates().listen(updateText)
 
-  val syntaxDoc = textArea.getDocument().asInstanceOf[RSyntaxDocument];
-
-  // I don't like the idea of a mutable variable;
-  // Maybe with appropriate signals/etc. in an FRP system,
-  // could attach partialTokMak to listen to TypKL's cursor pos.
-  var partialTokMak = new PartialTokenMaker(tokenMaker)
-  syntaxDoc.setSyntaxStyle(partialTokMak)
-
-  private val textCell      = new CellSink[Document](document)
   private val typedEventsKL = new StreamOfKeyListener()
-  val typeTutorKL           = new TypingKeyListener(textCell, typedEventsKL.typedEvents)
+  val typeTutorKL           = new TypingKeyListener(documentC, typedEventsKL.typedEvents)
 
   def linesInView(): Option[(Int, Int)] = {
     val viewRect = scrollPane.getViewport().getViewRect()
@@ -222,29 +221,11 @@ class TypingTutorPanel(text: String, document: Document, tokenMaker: TokenMaker)
         textArea.scrollRectToVisible(rectToView)
       }
 
+      // SMELL: 2019-01: can just use a Cell, surely
       partialTokMak.position = position
 
       forceRefresh()
     })
-
-  def setDocument(text: String, doc: Document, tokMak: TokenMaker): Unit = {
-    partialTokMak = new PartialTokenMaker(tokMak)
-    syntaxDoc.setSyntaxStyle(partialTokMak)
-
-    // Use the file extension to set/update the TokenMaker
-    updateText(text, doc.initialOffset)
-
-    textCell.send(doc)
-  }
-
-  // TODO If the interface here were easier to use, this function wouldn't be necessary.
-  def continueFromOffset(offset: Int): Unit = {
-    // The typingTutKL.markers listener takes care of updating other things
-    // regarding state.
-
-    val newDoc = textCell.sample().withInitialOffset(offset)
-    textCell.send(newDoc)
-  }
 
   private val pressedEscSink = new StreamSink[Unit]()
 

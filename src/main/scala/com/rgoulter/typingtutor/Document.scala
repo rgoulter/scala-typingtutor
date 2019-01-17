@@ -3,6 +3,8 @@ package com.rgoulter.typingtutor
 import scala.collection.immutable.SortedMap
 import scala.collection.immutable.SortedSet
 
+import org.fife.ui.rsyntaxtextarea.TokenMaker
+
 /**
   * Abstraction used by [[TypingKeyListener]] for what keys
   * the typing tutor is expecting.
@@ -13,6 +15,12 @@ import scala.collection.immutable.SortedSet
   * expected to be typed at those offsets) are represented by this class.
   */
 abstract class Document {
+
+  /** displayable text of the document */
+  def text(): String;
+
+  /** the token maker for the document */
+  def tokenMaker(): TokenMaker
 
   /** Character in the document at a particular index/offset. */
   def charAt(offset: Int): Char =

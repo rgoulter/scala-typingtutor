@@ -21,7 +21,7 @@ class DocumentImplSpec extends FlatSpec {
     val inputTextWithCR = "abc\r\ndef"
     val tokenMaker      = new PlainTextTokenMaker()
     val tokens          = Utils.tokenIteratorOf(inputTextWithCR, tokenMaker)
-    val document        = new DocumentImpl(inputTextWithCR, tokens)
+    val document        = new DocumentImpl(inputTextWithCR, tokens, tokenMaker)
 
     // Act
 

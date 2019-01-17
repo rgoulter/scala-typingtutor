@@ -117,6 +117,13 @@ object Utils {
       hm + (ext -> lang)
     })
 
+  val TokenMakerMap =
+    Languages.foldLeft(HashMap.empty[String, TokenMaker])({
+      (hashMap, languageTuple) =>
+        val (name, _, tokenMaker) = languageTuple
+        hashMap + (name -> tokenMaker)
+    })
+
   def languageForFile(f: File): Language = {
     // Special cases
     if (f.getName() == "makefile") {
