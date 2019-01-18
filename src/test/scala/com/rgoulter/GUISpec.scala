@@ -60,8 +60,7 @@ public static void main(String args[]) {
 int x;
 System.out.println("Hello World!");
 }
-}
-""")
+}""")
 
       Then("the user should be shown the results panel")
       window.textBox(

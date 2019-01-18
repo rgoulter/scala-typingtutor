@@ -109,7 +109,7 @@ class TypingTutorPanel(documentC: Cell[Document]) extends JPanel {
 
   private def updateText(document: Document): Unit = {
     partialTokMak = new PartialTokenMaker(document.tokenMaker)
-    syntaxDoc.setSyntaxStyle(partialTokMak) /// XXX KLUDGE; here and in setDoc
+    syntaxDoc.setSyntaxStyle(partialTokMak)
 
     textArea.setText(document.text)
     textArea.setCaretPosition(document.initialOffset)
