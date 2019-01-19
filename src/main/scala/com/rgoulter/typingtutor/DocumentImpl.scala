@@ -113,9 +113,16 @@ class DocumentImpl(
   }
 
   override lazy val initialOffset = {
+    // This is where the 'starting offset' gets reset
+    //  to the beginning of the document if the 'offset'
+    //  reached the last typeable offset in a previous session.
     val fromGivenInitOffs = typeableOffsets.from(initOffs)
 
-    if (fromGivenInitOffs.isEmpty) {
+    // Need to compare against 'tail' of remaining
+    //  typeable offsets, since the 'offset' will
+    //  reach the last typeable offset but may not
+    //  go beyond it (in TypingKeyListener).
+    if (fromGivenInitOffs.tail.isEmpty) {
       typeableOffsets.head
     } else {
       fromGivenInitOffs.head

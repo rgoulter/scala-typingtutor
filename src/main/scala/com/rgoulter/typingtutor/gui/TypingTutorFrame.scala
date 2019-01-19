@@ -113,7 +113,7 @@ class TypingTutorFrame extends JFrame("Typing Tutor") {
   setLocationRelativeTo(null)
 
   val selectedDocumentS: Stream[Document] =
-    fileSelectPanel.selectedFile.value.map {
+    fileSelectPanel.selectedFile.values.map {
       case Some(selectedFile) => {
         // DOCUMENT load from file
         val tokMak = Utils.tokenMakerForFile(selectedFile)
@@ -134,18 +134,22 @@ class TypingTutorFrame extends JFrame("Typing Tutor") {
   val changedDocumentS: Stream[DocumentChangeEvent] =
     selectedDocumentS.map(SelectedFile(_))
   val changedOffsetS: Stream[DocumentChangeEvent] =
-    Stream.filterOption(statsPanel.afterStats.map {
+    Stream.filterOptional(statsPanel.afterStats.map {
       case AfterStatsActions.ContinueSession(offset) =>
         Some(ChangedOffset(offset))
       case AfterStatsActions.RedoSession(offset) => Some(ChangedOffset(offset))
       case _                                     => None
     })
-  changeEventSC.send(changedDocumentS.merge(changedOffsetS))
+  private def resolveEvent(
+      evt1: DocumentChangeEvent,
+      evt2: DocumentChangeEvent
+  ): DocumentChangeEvent = evt1
+  changeEventSC.send(changedDocumentS.merge(changedOffsetS, resolveEvent))
 
   // Save exitOffset for the selectedFile
   val updateOffsetListener =
     Stream
-      .filterOption(
+      .filterOptional(
         typingTutorPanel.finishingOffset
           .snapshot(fileSelectPanel.selectedFile, {
             (offset: Int, currFile: Option[File]) =>

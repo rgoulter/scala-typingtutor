@@ -30,13 +30,13 @@ class TypingTutorSpec extends FeatureSpec with GivenWhenThen {
 """
       val inputLang = "plaintext"
 
-      val tokMak = new PlainTextTokenMaker()
+      val tokMak        = new PlainTextTokenMaker()
       val partialTokMak = new PartialTokenMaker(tokMak)
 
       // NOTE: we use tokMak for making DocumentImpl,
       // since we want *full* sequence tokens in DocumentImpl
       // for deciding which parts of inputText are comments/skippable.
-      val tokens = Utils.tokenIteratorOf(inputText, tokMak)
+      val tokens         = Utils.tokenIteratorOf(inputText, tokMak)
       val typingTutorDoc = new DocumentImpl(inputText, tokens, tokMak)
 
       val typingKeyListener = new TypingKLHelper(typingTutorDoc)
@@ -80,13 +80,13 @@ class TypingTutorSpec extends FeatureSpec with GivenWhenThen {
 """
       val inputLang = "plaintext"
 
-      val tokMak = new PlainTextTokenMaker()
+      val tokMak        = new PlainTextTokenMaker()
       val partialTokMak = new PartialTokenMaker(tokMak)
 
       // NOTE: we use tokMak for making DocumentImpl,
       // since we want *full* sequence tokens in DocumentImpl
       // for deciding which parts of inputText are comments/skippable.
-      val tokens = Utils.tokenIteratorOf(inputText, tokMak)
+      val tokens         = Utils.tokenIteratorOf(inputText, tokMak)
       val typingTutorDoc = new DocumentImpl(inputText, tokens, tokMak)
 
       val typingKeyListener = new TypingKLHelper(typingTutorDoc)
@@ -111,7 +111,8 @@ class TypingTutorSpec extends FeatureSpec with GivenWhenThen {
 
       val currentPosition = typingKeyListener.currentPos.sample()
 
-      Then("the marker should indicate that incorrect characters have been input")
+      Then(
+        "the marker should indicate that incorrect characters have been input")
       val currentNumIncorrect = typingKeyListener.markers.sample().numIncorrect
 
       assert(currentNumIncorrect > 0)

@@ -109,7 +109,7 @@ class TypingTutorPanel(documentC: Cell[Document]) extends JPanel {
 
   private def updateText(document: Document): Unit = {
     partialTokMak = new PartialTokenMaker(document.tokenMaker)
-    syntaxDoc.setSyntaxStyle(partialTokMak) /// XXX KLUDGE; here and in setDoc
+    syntaxDoc.setSyntaxStyle(partialTokMak)
 
     textArea.setText(document.text)
     textArea.setCaretPosition(document.initialOffset)
@@ -190,7 +190,7 @@ class TypingTutorPanel(documentC: Cell[Document]) extends JPanel {
   // n.b. it's important that a reference to this `listener` is retained,
   // or else the listener's callback won't be executed.
   private val listener = typeTutorKL.markers
-    .value()
+    .values()
     .listen(state => {
       import state.numIncorrect
       import state.position

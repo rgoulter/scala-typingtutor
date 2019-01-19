@@ -1,6 +1,6 @@
 language: scala
 scala:
-   - 2.11.11
+   - 2.12.2
 
 script:
   - xvfb-run sbt ++$TRAVIS_SCALA_VERSION clean coverage test
